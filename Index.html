@@ -1,0 +1,3561 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <base target="_top">
+    <title>Inventory Manager</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <style>
+        :root {
+            --navy: #0f172a;
+            --navy-mid: #1e293b;
+            --navy-light: #334155;
+            --blue: #2563eb;
+            --blue-light: #3b82f6;
+            --blue-glow: rgba(37, 99, 235, 0.18);
+            --amber: #f59e0b;
+            --amber-light: #fef3c7;
+            --emerald: #10b981;
+            --emerald-bg: #d1fae5;
+            --rose: #f43f5e;
+            --rose-bg: #ffe4e6;
+            --violet: #7c3aed;
+            --violet-bg: #f5f3ff;
+            --violet-glow: rgba(124, 58, 237, 0.18);
+            --cyan: #06b6d4;
+            --cyan-bg: #ecfeff;
+            --cyan-glow: rgba(6, 182, 212, 0.18);
+            --white: #ffffff;
+            --surface: #f1f5f9;
+            --surface2: #e2e8f0;
+            --border: #e2e8f0;
+            --border-dark: #cbd5e1;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --text-faint: #94a3b8;
+            --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06);
+            --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.10), 0 2px 6px rgba(15, 23, 42, 0.06);
+            --shadow-lg: 0 12px 40px rgba(15, 23, 42, 0.14), 0 4px 12px rgba(15, 23, 42, 0.08);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --font-mono: 'JetBrains Mono', monospace;
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            background-image:
+                radial-gradient(circle at 20% 0%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
+                radial-gradient(circle at 80% 100%, rgba(16, 185, 129, 0.05) 0%, transparent 50%);
+            background-attachment: fixed;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 110px;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .app-bar {
+            background: var(--navy);
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 500;
+            box-shadow: 0 2px 20px rgba(15, 23, 42, 0.35);
+            display: flex;
+            align-items: center;
+            height: 56px;
+            gap: 8px;
+        }
+
+        .app-bar-brand {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--blue-light);
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            margin-right: auto;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-bar-brand::before {
+            content: '';
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: var(--emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--emerald);
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+
+            50% {
+                opacity: .6;
+                transform: scale(.8)
+            }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .action-btn {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 7px 14px;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 500;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.danger {
+            color: rgba(244, 63, 94, 0.85);
+            border-color: rgba(244, 63, 94, 0.25);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(244, 63, 94, 0.12);
+            color: #f43f5e;
+            border-color: rgba(244, 63, 94, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            padding: 0 16px;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0
+            }
+
+            to {
+                opacity: 1
+            }
+        }
+
+        .spinner-ring {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 3px solid rgba(59, 130, 246, 0.2);
+            border-top-color: var(--blue-light);
+            animation: spin 0.9s linear infinite;
+            margin-bottom: 22px;
+            position: relative;
+        }
+
+        .spinner-ring::after {
+            content: '';
+            position: absolute;
+            inset: 5px;
+            border-radius: 50%;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            border-bottom-color: var(--emerald);
+            animation: spin 1.4s linear infinite reverse;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg)
+            }
+        }
+
+        /* ── Card Style Framework ── */
+        .txn-card {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            width: 100%;
+            min-height: 310px;
+            background-color: var(--white);
+            border: 1px solid #dcdfe4;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 24px;
+            transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .txn-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--border-dark);
+        }
+
+        .txn-card.processing {
+            opacity: 0.55;
+            pointer-events: none;
+        }
+
+        .txn-card.highlighted-card {
+            border-color: var(--emerald);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.18), var(--shadow-md);
+            animation: cardBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes cardBounce {
+            0% {
+                transform: scale(1)
+            }
+
+            50% {
+                transform: scale(1.015)
+            }
+
+            100% {
+                transform: scale(1)
+            }
+        }
+
+        /* Left Sidebar styling */
+        .sidebar {
+            background-color: #0e0e0e;
+            display: grid;
+            grid-template-rows: 1fr;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-id {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(14, 14, 14, 0.9);
+            color: #8c8c8c;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 12px 14px;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        /* Right Panel Content */
+        .main-content {
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+            background-color: #f1f4f9;
+        }
+
+        /* Header Strip */
+        .card-header {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: grid;
+            grid-template-columns: auto auto;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 24px;
+            transition: background 0.25s ease;
+        }
+
+        .status-badge {
+            display: grid;
+            grid-template-columns: auto auto;
+            align-items: center;
+            gap: 8px;
+            color: #64748b;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #cbd5e1;
+            border-radius: 50%;
+        }
+
+        .created-date {
+            color: #4a5568;
+            font-size: 12px;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* ── Standard Active Focus Styles (Glow Always Shines Amber) ── */
+        .txn-card.active-card {
+            border-color: var(--amber) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25), var(--shadow-md) !important;
+        }
+
+        .txn-card.active-card .card-header {
+            background-color: #fbf4e6 !important;
+            border-bottom: 1px solid #ebdcb9 !important;
+        }
+
+        .txn-card.active-card .card-header .status-badge {
+            color: #e29543 !important;
+        }
+
+        .txn-card.active-card .card-header .status-dot {
+            background-color: #e29543 !important;
+        }
+
+        /* ── New Item Card State Styles ── */
+        .txn-card.new-item-card {
+            border-color: #a78bfa;
+        }
+
+        .txn-card.new-item-card .card-header {
+            background-color: #f5f3ff;
+            border-bottom-color: #ddd6fe;
+        }
+
+        .txn-card.new-item-card .card-header .status-badge {
+            color: #7c3aed;
+        }
+
+        .txn-card.new-item-card .card-header .status-dot {
+            background-color: #7c3aed;
+        }
+
+        .txn-card.new-item-card.active-card {
+            border-color: #a78bfa !important;
+            box-shadow: 0 0 0 3.5px rgba(245, 158, 11, 0.35), var(--shadow-md) !important;
+        }
+
+        .txn-card.new-item-card.active-card .card-header {
+            background-color: #f5f3ff !important;
+            border-bottom: 1px solid #ddd6fe !important;
+        }
+
+        .txn-card.new-item-card.active-card .card-header .status-badge {
+            color: #7c3aed !important;
+        }
+
+        .txn-card.new-item-card.active-card .card-header .status-dot {
+            background-color: #7c3aed !important;
+        }
+
+        /* ── Duplicate Card State Styles ── */
+        .txn-card.duplicate-card {
+            border-color: #22d3ee;
+        }
+
+        .txn-card.duplicate-card .card-header {
+            background-color: #ecfeff;
+            border-bottom-color: #a5f3fc;
+        }
+
+        .txn-card.duplicate-card .card-header .status-badge {
+            color: #0891b2;
+        }
+
+        .txn-card.duplicate-card .card-header .status-dot {
+            background-color: #0891b2;
+        }
+
+        .txn-card.duplicate-card.active-card {
+            border-color: #22d3ee !important;
+            box-shadow: 0 0 0 3.5px rgba(245, 158, 11, 0.35), var(--shadow-md) !important;
+        }
+
+        /* Overrides to ensure active Duplicate cards keep their Cyan colors while having the Amber focus shadow */
+        .txn-card.duplicate-card.active-card .card-header {
+            background-color: #ecfeff !important;
+            border-bottom: 1px solid #a5f3fc !important;
+        }
+
+        .txn-card.duplicate-card.active-card .card-header .status-badge {
+            color: #0891b2 !important;
+        }
+
+        .txn-card.duplicate-card.active-card .card-header .status-dot {
+            background-color: #0891b2 !important;
+        }
+
+        /* Badges */
+        .new-item-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--violet);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .duplicate-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: var(--cyan);
+            color: #fff;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            animation: badgePop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes badgePop {
+            from {
+                transform: scale(.7);
+                opacity: 0
+            }
+
+            to {
+                transform: scale(1);
+                opacity: 1
+            }
+        }
+
+        /* Form Container layout inside card */
+        .form-container {
+            padding: 24px;
+            display: grid;
+            grid-auto-rows: auto;
+            gap: 16px;
+        }
+
+        .row {
+            display: grid;
+            gap: 16px;
+            align-items: flex-end;
+            width: 100%;
+            max-width: 814px;
+        }
+
+        .row-1 {
+            grid-template-columns: 250px 1fr 250px;
+        }
+
+        .row-2 {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .row-3 {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        /* Field Styling */
+        .field-group {
+            display: grid;
+            grid-template-rows: auto auto;
+            gap: 6px;
+        }
+
+        .label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #5c6470;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: grid;
+            align-items: center;
+        }
+
+        .input-field {
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 13.5px;
+            color: #1f2937;
+            outline: none;
+            height: 38px;
+            box-sizing: border-box;
+        }
+
+        .input-field:focus {
+            border-color: #a1a1a1;
+            box-shadow: 0 0 0 2px rgba(161, 161, 161, 0.15);
+        }
+
+        .input-field::placeholder {
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        select.input-field {
+            appearance: none;
+            padding-right: 32px;
+            cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%234b5563' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+
+        .chevron {
+            position: absolute;
+            right: 12px;
+            pointer-events: none;
+            width: 14px;
+            height: 14px;
+            color: #4b5563;
+        }
+
+        .error-highlight {
+            border-color: var(--rose) !important;
+            background: #fff5f6 !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.12) !important;
+        }
+
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0
+        }
+
+        input[type=number] {
+            -moz-appearance: textfield
+        }
+
+        /* Segmented Pill Control for Transaction Type */
+        .segmented-control {
+            display: grid;
+            grid-auto-flow: column;
+            grid-auto-columns: max-content;
+            gap: 8px;
+            height: 38px;
+            align-items: center;
+        }
+
+        .btn-pill {
+            background: #ffffff;
+            border: 1px solid #d1d5db;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #4b5563;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.15s ease;
+        }
+
+        .btn-pill:hover {
+            border-color: #9ca3af;
+            color: #1f2937;
+        }
+
+        .btn-pill.active {
+            background: #000000;
+            color: #ffffff;
+            border-color: #000000;
+        }
+
+        .input-field.total {
+            background-color: #e1ebf7;
+            border-color: #cbd5e1;
+            font-weight: 700;
+        }
+
+        /* Stock and feedback logs under the fields */
+        .stock-info {
+            font-size: 0.76rem;
+            color: var(--blue);
+            margin-top: 4px;
+            font-weight: 500;
+            font-family: var(--font-mono);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 4px;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-4px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .stock-info.danger {
+            color: var(--rose);
+        }
+
+        .stock-badge {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 4px;
+            padding: 1px 6px;
+            font-size: 0.7rem;
+        }
+
+        .stock-info.danger .stock-badge {
+            background: var(--rose-bg);
+            border-color: #fca5a5;
+        }
+
+        .new-item-hint {
+            font-size: 0.75rem;
+            color: var(--violet);
+            margin-top: 4px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            animation: slideDown 0.2s ease;
+        }
+
+        .error-message {
+            color: var(--rose);
+            font-size: 0.75rem;
+            margin-top: 4px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            animation: slideDown 0.2s ease;
+        }
+
+        /* Compact Upload Bar inside Footer */
+        .footer {
+            padding: 16px 24px;
+            display: grid;
+            grid-template-columns: auto auto;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #e5e7eb;
+            background-color: #fafbfc;
+        }
+
+        .attachments {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .attachment-link {
+            display: grid;
+            grid-template-columns: auto auto;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #374151;
+            text-decoration: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .attachment-link:hover {
+            text-decoration: underline;
+        }
+
+        .attachment-icon {
+            width: 14px;
+            height: 14px;
+            color: #4b5563;
+        }
+
+        .trash-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #4b5563;
+            display: grid;
+            place-items: center;
+            padding: 6px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+
+        .trash-btn:hover {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        .action-btn-compact {
+            background: var(--violet-bg);
+            color: var(--violet);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .action-btn-compact:hover {
+            background: rgba(124, 58, 237, 0.12);
+            border-color: rgba(124, 58, 237, 0.4);
+        }
+
+        .save-to-bills-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+        }
+
+        .save-to-bills-label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            text-transform: none;
+            color: var(--violet);
+            font-weight: 600;
+            font-size: 0.78rem;
+            margin-bottom: 0;
+        }
+
+        .upload-file-name {
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sticky-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            padding: 14px 20px;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.08);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            z-index: 100;
+        }
+
+        .btn {
+            padding: 11px 28px;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-family: 'DM Sans', sans-serif;
+            letter-spacing: 0.03em;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .btn-submit {
+            background: var(--navy);
+            color: white;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.3);
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: var(--navy-mid);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.35);
+        }
+
+        .btn-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            background: var(--border-dark);
+            color: var(--text-faint);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .btn-add {
+            background: var(--white);
+            color: var(--blue);
+            border: 1.5px solid var(--blue);
+        }
+
+        .btn-add:hover:not(:disabled) {
+            background: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.15);
+        }
+
+        .card-count {
+            background: var(--blue);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 10px;
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .new-item-count {
+            background: var(--violet);
+            color: #fff;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.18s ease;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: var(--radius-lg);
+            width: 95%;
+            max-width: 560px;
+            box-shadow: var(--shadow-lg);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            animation: modalSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 1px solid var(--border);
+        }
+
+        .modal-content.large {
+            max-width: 860px;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(24px) scale(.97)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1)
+            }
+        }
+
+        .modal-header {
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .modal-header h3 {
+            margin: 0 0 10px;
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .modal-header input[type="text"] {
+            padding: 9px 12px;
+            font-size: 0.88rem;
+        }
+
+        .modal-body {
+            padding: 20px 22px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 14px 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            background: var(--surface);
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        .modal-btn {
+            padding: 9px 20px;
+            border-radius: var(--radius-sm);
+            border: none;
+            font-weight: 600;
+            font-size: 0.86rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: var(--transition);
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--navy-mid);
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: var(--white);
+            color: var(--text-muted);
+            border: 1.5px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--surface);
+        }
+
+        table.txn-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+
+        table.txn-table th {
+            background: var(--navy);
+            color: rgba(255, 255, 255, 0.8);
+            padding: 11px 14px;
+            text-align: left;
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        table.txn-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        table.txn-table tr:hover td {
+            background: #f8faff;
+        }
+
+        table.txn-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.txn-table input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--blue);
+            cursor: pointer;
+        }
+
+        /* ── Highlight Styling For "Create in Master" Mode Fields ── */
+        .new-item-label-highlight {
+            color: var(--violet) !important;
+        }
+
+        .new-item-highlight {
+            border-color: var(--violet) !important;
+            background-color: var(--violet-bg) !important;
+        }
+
+        /* ── Full Image Lightbox ── */
+        .image-lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            z-index: 5000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.2s ease;
+            padding: 20px;
+        }
+
+        .lightbox-toolbar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 100%);
+            z-index: 5001;
+        }
+
+        .lightbox-title {
+            flex: 1;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .lightbox-title small {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.4);
+            font-family: var(--font-mono);
+            margin-top: 2px;
+        }
+
+        .lightbox-actions {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .lightbox-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+            font-family: 'DM Sans', sans-serif;
+            text-decoration: none;
+        }
+
+        .lightbox-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+            transform: translateY(-1px);
+        }
+
+        .lightbox-btn.close-btn {
+            width: 36px;
+            height: 36px;
+            padding: 0;
+            border-radius: 50%;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .lightbox-image {
+            max-width: 92vw;
+            max-height: 80vh;
+            border-radius: 12px;
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+            object-fit: contain;
+            animation: lbImgPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+            background: #1a1a2e;
+        }
+
+        @keyframes lbImgPop {
+            from {
+                opacity: 0;
+                transform: scale(0.92);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* ── Responsive Grid Breakpoints ── */
+        @media (max-width: 1100px) {
+            .txn-card {
+                grid-template-columns: 1fr !important;
+                grid-template-rows: auto 1fr !important;
+                min-height: auto;
+            }
+
+            .sidebar {
+                height: 250px;
+            }
+
+            .row-1,
+            .row-2,
+            .row-3 {
+                grid-template-columns: 1fr !important;
+                max-width: 100% !important;
+            }
+
+            .segmented-control {
+                grid-auto-flow: row !important;
+                grid-template-columns: repeat(4, 1fr) !important;
+                height: auto !important;
+                width: 100%;
+            }
+
+            .btn-pill {
+                text-align: center !important;
+                padding: 8px 0 !important;
+            }
+        }
+
+        @media(max-width:640px) {
+            .app-bar {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 10px;
+                gap: 6px;
+            }
+
+            .app-bar-brand {
+                font-size: .75rem;
+            }
+
+            .action-btn {
+                font-size: .75rem;
+                padding: 6px 10px;
+            }
+
+            .container {
+                padding: 0 12px;
+                margin-top: 16px;
+            }
+
+            .sticky-footer {
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            .btn {
+                padding: 10px 18px;
+                font-size: .85rem;
+            }
+
+            .lightbox-toolbar {
+                padding: 10px 14px;
+            }
+
+            .lightbox-title {
+                font-size: 0.8rem;
+            }
+        }
+        /* ── Theme Toggle Button ── */
+        .theme-toggle {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.75);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: var(--transition);
+            padding: 0;
+            flex-shrink: 0;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.25);
+            transform: translateY(-1px);
+        }
+
+        /* ── Keyboard Shortcuts Panel ── */
+        .shortcuts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px 24px;
+        }
+        .shortcut-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .shortcut-row:last-child { border-bottom: none; }
+        .shortcut-label {
+            font-size: 0.82rem;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+        .shortcut-keys {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .kbd {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 24px;
+            height: 24px;
+            padding: 0 6px;
+            background: var(--surface);
+            border: 1px solid var(--border-dark);
+            border-radius: 5px;
+            font-family: var(--font-mono);
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: var(--text-main);
+            box-shadow: 0 1px 0 var(--border-dark);
+            white-space: nowrap;
+        }
+        .shortcut-divider {
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 10px 0 4px;
+            grid-column: 1 / -1;
+            border-bottom: 2px solid var(--border);
+        }
+
+        @media (max-width: 640px) {
+            .shortcuts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ── DARK MODE ── */
+        body.dark-mode {
+            --white: #1a1b2e;
+            --surface: #12121e;
+            --surface2: #1e1f33;
+            --border: #2a2b40;
+            --border-dark: #3a3b55;
+            --text-main: #e2e4f0;
+            --text-muted: #9294a8;
+            --text-faint: #5c5e72;
+            --navy: #0d0e1a;
+            --navy-mid: #1a1b2e;
+            --navy-light: #2a2b40;
+            --amber-light: #3d3520;
+            --emerald-bg: rgba(16, 185, 129, 0.12);
+            --rose-bg: rgba(244, 63, 94, 0.12);
+            --violet-bg: rgba(124, 58, 237, 0.12);
+            --cyan-bg: rgba(6, 182, 212, 0.12);
+            --blue-glow: rgba(37, 99, 235, 0.25);
+            --violet-glow: rgba(124, 58, 237, 0.25);
+            --cyan-glow: rgba(6, 182, 212, 0.25);
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.3);
+            --shadow-lg: 0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.35);
+
+            background: #12121e;
+            background-image:
+                radial-gradient(circle at 20% 0%, rgba(37, 99, 235, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 100%, rgba(124, 58, 237, 0.06) 0%, transparent 50%);
+        }
+
+        body.dark-mode .app-bar {
+            background: #0a0b14;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.5);
+        }
+
+        body.dark-mode .txn-card {
+            background-color: #1a1b2e;
+            border-color: #2a2b40;
+        }
+        body.dark-mode .txn-card:hover {
+            border-color: #3a3b55;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #08090f;
+        }
+        body.dark-mode .sidebar-id {
+            background-color: rgba(8, 9, 15, 0.9);
+            color: #5c5e72;
+        }
+
+        body.dark-mode .main-content {
+            background-color: #16172a;
+        }
+        body.dark-mode .card-header {
+            background-color: #1e1f33;
+            border-bottom-color: #2a2b40;
+        }
+        body.dark-mode .status-badge { color: #9294a8; }
+        body.dark-mode .status-dot { background-color: #5c5e72; }
+        body.dark-mode .created-date { color: #9294a8; }
+        body.dark-mode .created-date input { color: #9294a8 !important; }
+
+        body.dark-mode .form-container { background: transparent; }
+
+        body.dark-mode .label { color: #8486a0; }
+
+        body.dark-mode .input-field {
+            background-color: #12121e;
+            border-color: #2a2b40;
+            color: #e2e4f0;
+        }
+        body.dark-mode .input-field:focus {
+            border-color: #5c5eaa;
+            box-shadow: 0 0 0 2px rgba(92, 94, 170, 0.2);
+        }
+        body.dark-mode .input-field::placeholder { color: #5c5e72; }
+        body.dark-mode select.input-field {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239294a8' stroke-width='2.5'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/svg%3E");
+        }
+
+        body.dark-mode .input-field.total {
+            background-color: rgba(37, 99, 235, 0.1);
+            border-color: #2a2b40;
+        }
+
+        body.dark-mode .btn-pill {
+            background: #12121e;
+            border-color: #2a2b40;
+            color: #9294a8;
+        }
+        body.dark-mode .btn-pill:hover {
+            border-color: #5c5e72;
+            color: #e2e4f0;
+        }
+        body.dark-mode .btn-pill.active {
+            background: #e2e4f0;
+            color: #12121e;
+            border-color: #e2e4f0;
+        }
+
+        body.dark-mode .stock-badge {
+            background: rgba(37, 99, 235, 0.12);
+            border-color: rgba(37, 99, 235, 0.25);
+        }
+        body.dark-mode .stock-info.danger .stock-badge {
+            background: rgba(244, 63, 94, 0.12);
+            border-color: rgba(244, 63, 94, 0.25);
+        }
+
+        body.dark-mode .error-highlight {
+            border-color: var(--rose) !important;
+            background: rgba(244, 63, 94, 0.08) !important;
+            box-shadow: 0 0 0 3px rgba(244, 63, 94, 0.15) !important;
+        }
+
+        body.dark-mode .new-item-highlight {
+            border-color: var(--violet) !important;
+            background-color: rgba(124, 58, 237, 0.1) !important;
+        }
+
+        body.dark-mode .footer {
+            background-color: #1e1f33;
+            border-top-color: #2a2b40;
+        }
+        body.dark-mode .attachment-link { color: #9294a8; }
+        body.dark-mode .attachment-icon { color: #9294a8; }
+        body.dark-mode .trash-btn { color: #9294a8; }
+        body.dark-mode .trash-btn:hover {
+            background-color: rgba(244, 63, 94, 0.12);
+            color: #f43f5e;
+        }
+
+        body.dark-mode .sticky-footer {
+            background: rgba(26, 27, 46, 0.94);
+            border-top-color: #2a2b40;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
+        }
+
+        body.dark-mode .btn-submit {
+            background: #e2e4f0;
+            color: #12121e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        body.dark-mode .btn-submit:hover:not(:disabled) {
+            background: #ffffff;
+        }
+        body.dark-mode .btn-submit:disabled {
+            background: #2a2b40;
+            color: #5c5e72;
+        }
+        body.dark-mode .btn-add {
+            background: transparent;
+            color: var(--blue-light);
+            border-color: var(--blue-light);
+        }
+        body.dark-mode .btn-add:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        body.dark-mode .modal-content {
+            background: #1a1b2e;
+            border-color: #2a2b40;
+        }
+        body.dark-mode .modal-header { border-bottom-color: #2a2b40; }
+        body.dark-mode .modal-footer {
+            background: #12121e;
+            border-top-color: #2a2b40;
+        }
+        body.dark-mode .btn-secondary {
+            background: #1a1b2e;
+            color: #9294a8;
+            border-color: #2a2b40;
+        }
+        body.dark-mode .btn-secondary:hover { background: #1e1f33; }
+        body.dark-mode .btn-primary {
+            background: #e2e4f0;
+            color: #12121e;
+        }
+        body.dark-mode .btn-primary:hover:not(:disabled) {
+            background: #ffffff;
+        }
+
+        body.dark-mode table.txn-table th {
+            background: #0a0b14;
+        }
+        body.dark-mode table.txn-table td {
+            border-bottom-color: #2a2b40;
+            color: #e2e4f0;
+        }
+        body.dark-mode table.txn-table tr:hover td {
+            background: rgba(37, 99, 235, 0.05);
+        }
+
+        body.dark-mode .loading-overlay {
+            background: rgba(10, 11, 20, 0.92);
+        }
+
+        body.dark-mode .action-btn-compact {
+            background: rgba(124, 58, 237, 0.12);
+            border-color: rgba(124, 58, 237, 0.25);
+        }
+
+        /* Active card states in dark mode */
+        body.dark-mode .txn-card.active-card {
+            border-color: var(--amber) !important;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2), var(--shadow-md) !important;
+        }
+        body.dark-mode .txn-card.active-card .card-header {
+            background-color: rgba(245, 158, 11, 0.08) !important;
+            border-bottom-color: rgba(245, 158, 11, 0.15) !important;
+        }
+        body.dark-mode .txn-card.new-item-card .card-header {
+            background-color: rgba(124, 58, 237, 0.08);
+            border-bottom-color: rgba(124, 58, 237, 0.15);
+        }
+        body.dark-mode .txn-card.duplicate-card .card-header {
+            background-color: rgba(6, 182, 212, 0.08);
+            border-bottom-color: rgba(6, 182, 212, 0.15);
+        }
+
+        body.dark-mode .kbd {
+            background: #1e1f33;
+            border-color: #3a3b55;
+            color: #e2e4f0;
+            box-shadow: 0 1px 0 #3a3b55;
+        }
+    </style>
+</head>
+
+<body ng-app="InventoryApp" ng-controller="MainCtrl" ng-class="{'dark-mode': isDarkMode}">
+
+    <div class="app-bar">
+        <div class="app-bar-brand">Inventory Manager</div>
+        <div class="action-buttons">
+            <button class="action-btn" ng-click="openModal('prevTxn')" ng-disabled="isSubmitting" title="Alt+H">🔍 History</button>
+            <button class="action-btn" ng-click="openModal('addCategory')" ng-disabled="isSubmitting" title="Alt+C">📁
+                Category</button>
+            <button class="action-btn" ng-click="openModal('addItem')" ng-disabled="isSubmitting" title="Alt+I">📦 Item</button>
+            <button class="action-btn" ng-click="openModal('billManager')" ng-disabled="isSubmitting"
+                style="color:#a78bfa; border-color:rgba(167,139,250,0.35);" title="Alt+B">🧾 Bills</button>
+            <button class="action-btn danger" ng-click="manualClearDraft()" ng-disabled="isSubmitting">🗑️
+                Clear</button>
+            <button class="theme-toggle" ng-click="toggleTheme()" title="Toggle dark/light mode (Alt+T)">
+                <span ng-if="!isDarkMode">🌙</span>
+                <span ng-if="isDarkMode">☀️</span>
+            </button>
+            <button class="theme-toggle" ng-click="openModal('shortcuts')" title="Keyboard shortcuts (Alt+K)">
+                ⌨️
+            </button>
+        </div>
+    </div>
+
+    <div class="loading-overlay" ng-if="isLoading || isSubmitting">
+        <div class="spinner-ring"></div>
+        <div class="loading-text">
+            <span ng-if="isLoading">Loading Inventory…</span>
+            <span ng-if="isSubmitting && !isLoading">
+                Processing Transactions...
+            </span>
+        </div>
+    </div>
+
+    <div class="container">
+        <form name="mainForm">
+            <div class="txn-card" ng-repeat="txn in transactions track by $index" ng-click="setActiveCard($index)"
+                ng-class="{
+           'processing':    isSubmitting,
+           'active-card':   activeCardIndex === $index,
+           'new-item-card': txn.isNewItem,
+           'duplicate-card': txn.isDuplicate
+         }">
+
+                <!-- Left Sidebar Column with vector graphic, existing item image, or new item image upload option -->
+                <div class="sidebar" ng-click="onSidebarClick(txn, $index); $event.stopPropagation();"
+                    ng-style="{'cursor': (txn.isNewItem || (txn.imageUrl && !txn.isUntracked && txn.name && !txn.imageError)) ? 'pointer' : 'default'}">
+
+                    <!-- 1. Preview of newly uploaded item image (if in New Item mode and image is selected) -->
+                    <img ng-if="txn.isNewItem && txn.newItemImageSrc" ng-src="{{txn.newItemImageSrc}}"
+                        style="width: 100%; height: 100%; object-fit: cover; display: block;">
+
+                    <!-- 2. Overlay / Buttons for new item image upload when an image IS selected -->
+                    <div ng-if="txn.isNewItem && txn.newItemImageFileObj"
+                        style="position: absolute; top: 10px; right: 10px; z-index: 10;">
+                        <button type="button" class="trash-btn"
+                            style="background: rgba(255, 255, 255, 0.9); border-radius: 50%; width: 28px; height: 28px; padding: 0; box-shadow: var(--shadow-sm);"
+                            ng-click="clearNewItemImage(txn, $index); $event.stopPropagation();"
+                            title="Remove item image">
+                            <span style="color: var(--rose); font-weight: bold; font-size: 16px;">×</span>
+                        </button>
+                    </div>
+
+                    <!-- 3. Upload Prompt when in New Item mode and NO image is selected yet -->
+                    <div ng-if="txn.isNewItem && !txn.newItemImageFileObj"
+                        style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding: 20px; padding-bottom: 40px !important; text-align: center; color: #a78bfa; border: 2px dashed rgba(167, 139, 250, 0.4); margin: 10px; border-radius: 8px; box-sizing: border-box;">
+                        <input type="file" id="newItemImage-{{$index}}" accept="image/*" style="display: none;"
+                            file-model="txn.newItemImageFileObj">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                            style="margin-bottom: 8px; color: var(--violet);">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                            <polyline points="21 15 16 10 5 21"></polyline>
+                        </svg>
+                        <div
+                            style="font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                            + Add Item Image</div>
+                        <div style="font-size: 0.65rem; color: #8c8c8c; margin-top: 4px;">Click to upload</div>
+                    </div>
+
+                    <!-- 4. Dynamic existing item image if available (and not in New Item mode) -->
+                    <img ng-if="!txn.isNewItem && txn.imageUrl && !txn.isUntracked && txn.name && !txn.imageError"
+                        ng-src="{{txn.imageUrl}}" alt="{{txn.name}}" image-error-fallback="txn.imageError = true"
+                        style="width: 100%; height: 100%; object-fit: cover; display: block;">
+
+                    <!-- 5. Fallback bearing SVG (and not in New Item mode) -->
+                    <svg ng-if="!txn.isNewItem && (!txn.imageUrl || txn.isUntracked || !txn.name || txn.imageError)"
+                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 250 250"
+                        style="width: 100%; height: 100%; display: block; background: radial-gradient(circle at 40% 40%, #202326 0%, #0d0f11 90%);">
+                        <defs>
+                            <linearGradient id="metalGrad-{{$index}}" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#9ca3af" />
+                                <stop offset="25%" stop-color="#e5e7eb" />
+                                <stop offset="50%" stop-color="#4b5563" />
+                                <stop offset="75%" stop-color="#f3f4f6" />
+                                <stop offset="100%" stop-color="#1f2937" />
+                            </linearGradient>
+                            <radialGradient id="ballGrad-{{$index}}" cx="35%" cy="35%" r="65%">
+                                <stop offset="0%" stop-color="#ffffff" />
+                                <stop offset="40%" stop-color="#d1d5db" />
+                                <stop offset="85%" stop-color="#374151" />
+                                <stop offset="100%" stop-color="#111827" />
+                            </radialGradient>
+                        </defs>
+                        <!-- Outer Rim Ring -->
+                        <circle cx="125" cy="125" r="95" fill="none" stroke="url(#metalGrad-{{$index}})"
+                            stroke-width="12" />
+                        <circle cx="125" cy="125" r="88" fill="none" stroke="#000" stroke-width="1" />
+                        <!-- Outer Bearing Race -->
+                        <circle cx="125" cy="125" r="76" fill="none" stroke="url(#metalGrad-{{$index}})"
+                            stroke-width="14" />
+                        <!-- Ball Cage / Retainer Ring -->
+                        <circle cx="125" cy="125" r="54" fill="none" stroke="#181a1d" stroke-width="20" />
+                        <!-- Symmetrical 3D Ball Bearings -->
+                        <circle cx="125" cy="71" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="163" cy="87" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="179" cy="125" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="163" cy="163" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="125" cy="179" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="87" cy="163" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="71" cy="125" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <circle cx="87" cy="87" r="10" fill="url(#ballGrad-{{$index}})" />
+                        <!-- Inner Bearing Race -->
+                        <circle cx="125" cy="125" r="41" fill="none" stroke="url(#metalGrad-{{$index}})"
+                            stroke-width="11" />
+                        <!-- Inner Shaft Connection Rim -->
+                        <circle cx="125" cy="125" r="30" fill="#08090a" stroke="#25282d" stroke-width="2" />
+                    </svg>
+
+                    <div class="sidebar-id">CARD #{{$index + 1}}</div>
+                </div>
+
+                <!-- Right Side Content Area -->
+                <div class="main-content">
+
+                    <!-- Top Header Strip -->
+                    <div class="card-header">
+                        <div class="status-badge" ng-if="!txn.isNewItem && !txn.isDuplicate">
+                            <span class="status-dot"></span>
+                            Active Transaction
+                        </div>
+                        <div class="status-badge" ng-if="txn.isNewItem && !txn.isDuplicate" style="color: #7c3aed;">
+                            <span class="status-dot" style="background-color: #7c3aed;"></span>
+                            ✦ New Item
+                        </div>
+                        <div class="status-badge" ng-if="txn.isDuplicate" style="color: #0891b2;">
+                            <span class="status-dot" style="background-color: #0891b2;"></span>
+                            ⚠️ Duplicate Entry
+                        </div>
+                        <div class="created-date" title="Click to change date">
+                            <!-- Calendar Icon -->
+                            <svg xmlns="http://www.w3.org/2000/svg" style="width:14px; height:14px; color:#4a5568;"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M8 7V3m8 3V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <input type="date" ng-model="txn.transactionDateTime" required
+                                style="border:none; background:transparent; font-family:inherit; font-size:12px; font-weight:500; color:#4a5568; outline:none; cursor:pointer;"
+                                ng-class="{'error-highlight': submitAttempted && !txn.transactionDateTime}">
+                        </div>
+                    </div>
+
+                    <!-- Form Elements Block -->
+                    <div class="form-container">
+                        <fieldset ng-disabled="isSubmitting"
+                            style="border:none; padding:0; margin:0; display:grid; gap:16px;">
+
+                            <!-- Row 1 -->
+                            <div class="row row-1">
+                                <div class="field-group">
+                                    <span class="label">Site Name *</span>
+                                    <div class="input-wrapper">
+                                        <input type="text" class="input-field" ng-model="txn.siteName" list="siteList"
+                                            placeholder="Select or type site…" required
+                                            ng-class="{'error-highlight': submitAttempted && !txn.siteName}">
+                                    </div>
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label">Transaction Type *</span>
+                                    <div class="segmented-control">
+                                        <button type="button" class="btn-pill"
+                                            ng-class="{'active': txn.transactionType === 'In'}"
+                                            ng-click="txn.transactionType = 'In'; recalculateRunningStocks()">In</button>
+                                        <button type="button" class="btn-pill"
+                                            ng-class="{'active': txn.transactionType === 'Out'}"
+                                            ng-click="txn.transactionType = 'Out'; recalculateRunningStocks()">Out</button>
+                                        <button type="button" class="btn-pill"
+                                            ng-class="{'active': txn.transactionType === 'Repair'}"
+                                            ng-click="txn.transactionType = 'Repair'; recalculateRunningStocks()">Repair</button>
+                                        <button type="button" class="btn-pill"
+                                            ng-class="{'active': txn.transactionType === 'Direct'}"
+                                            ng-click="txn.transactionType = 'Direct'; recalculateRunningStocks()">Direct</button>
+                                    </div>
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label" ng-class="{'new-item-label-highlight': txn.isNewItem}">
+                                        Category <span ng-if="txn.isNewItem" style="color:var(--violet)">*</span>
+                                    </span>
+                                    <div class="input-wrapper">
+                                        <select class="input-field" ng-model="txn.category" ng-change="filterItems(txn)"
+                                            ng-class="{
+                                            'error-highlight': submitAttempted && txn.isNewItem && !txn.category,
+                                            'new-item-highlight': txn.isNewItem
+                                        }">
+                                            <option value="">All Categories</option>
+                                            <option ng-repeat="cat in categories track by $index" value="{{cat}}">
+                                                {{cat}}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Row 2 -->
+                            <div class="row row-2">
+                                <div class="field-group">
+                                    <span class="label">Item Name *</span>
+                                    <div class="input-wrapper">
+                                        <input type="text" class="input-field" ng-model="txn.searchName"
+                                            list="itemList-{{$index}}" ng-change="onItemSelect(txn)"
+                                            placeholder="Search existing or type new name…" required
+                                            ng-class="{'error-highlight': submitAttempted && !txn.name}"
+                                            style="font-weight: 700;">
+                                        <datalist id="itemList-{{$index}}">
+                                            <option ng-repeat="opt in txn.availableOptions track by $index"
+                                                value="{{opt.name}}"></option>
+                                        </datalist>
+                                    </div>
+
+                                    <!-- Stocks & Intelligent Context Feedback Area -->
+                                    <div class="stock-info"
+                                        ng-if="!txn.isNewItem && !txn.isUntracked && txn.currentStock !== undefined && txn.name"
+                                        ng-class="{'danger': txn.currentStock <= 0}">
+                                        <span class="stock-badge">Stock: {{txn.currentStock | number:2}}
+                                            {{txn.unit}}</span>
+                                        <span class="stock-badge" ng-if="txn.rate > 0">₹{{txn.rate | number:2}}</span>
+                                        <span class="stock-badge" ng-if="txn.itemCategory || txn.category"
+                                            style="background: var(--surface2);">{{txn.itemCategory ||
+                                            txn.category}}</span>
+                                    </div>
+
+                                    <div class="new-item-hint" ng-if="txn.isUntracked && txn.name"
+                                        style="color: #64748b;">
+                                        ℹ "{{txn.name}}" is not in master list.
+                                        <button type="button"
+                                            style="background:var(--violet);color:#fff;border:none;padding:2px 8px;border-radius:12px;font-size:0.68rem;font-weight:bold;cursor:pointer;margin-left:4px;"
+                                            ng-click="enableNewItemMode(txn)">+ Create in Master</button>
+                                    </div>
+
+                                    <div class="new-item-hint" ng-if="txn.isNewItem && txn.name">
+                                        ✦ "{{txn.name}}" will be auto-created
+                                        <button type="button"
+                                            style="background:none;border:none;color:var(--rose);font-size:0.68rem;cursor:pointer;margin-left:4px;font-weight:bold;"
+                                            ng-click="cancelNewItemMode(txn)">[Cancel]</button>
+                                    </div>
+
+                                    <div class="error-message"
+                                        ng-if="!txn.isNewItem && !txn.isUntracked && (txn.transactionType === 'Out' || txn.transactionType === 'Repair') && txn.quantity > txn.currentStock">
+                                        ⚠ Insufficient — only {{txn.currentStock | number:2}} {{txn.unit}} available
+                                    </div>
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label">Additional Description</span>
+                                    <input type="text" class="input-field" ng-model="txn.additionalDescription"
+                                        placeholder="Brand, spec, notes…">
+                                </div>
+                            </div>
+
+                            <!-- Row 3 -->
+                            <div class="row row-3">
+                                <div class="field-group">
+                                    <span class="label">Quantity *</span>
+                                    <input type="number" class="input-field" ng-model="txn.quantity"
+                                        ng-change="recalculateRunningStocks(); calcTotal(txn)" step="any" required
+                                        placeholder="0"
+                                        ng-class="{'error-highlight': submitAttempted && (!txn.quantity || txn.quantity <= 0)}">
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label" ng-class="{'new-item-label-highlight': txn.isNewItem}">
+                                        Unit <span ng-if="txn.isNewItem" style="color:var(--violet)">*</span>
+                                    </span>
+                                    <input type="text" class="input-field" ng-model="txn.unitOverride"
+                                        placeholder="{{txn.isNewItem ? 'e.g. pcs, mtr, box' : (txn.unit || 'pcs')}}"
+                                        ng-class="{
+                                        'new-item-highlight': txn.isNewItem,
+                                        'error-highlight': submitAttempted && txn.isNewItem && !txn.unitOverride
+                                    }">
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label" ng-class="{'new-item-label-highlight': txn.isNewItem}">
+                                        Rate (₹) <span ng-if="txn.isNewItem" style="color:var(--violet)">*</span>
+                                    </span>
+                                    <input type="number" step="0.01" class="input-field" ng-model="txn.rateOverride"
+                                        ng-change="calcTotal(txn)"
+                                        placeholder="{{txn.isNewItem ? '0.00' : (txn.rate || 0)}}" ng-class="{
+                                        'new-item-highlight': txn.isNewItem,
+                                        'error-highlight': submitAttempted && txn.isNewItem && (txn.rateOverride === undefined || txn.rateOverride === null || txn.rateOverride === '' || txn.rateOverride <= 0)
+                                    }">
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label">Total (₹)</span>
+                                    <input type="number" step="0.01" class="input-field total"
+                                        ng-model="txn.totalAmount" ng-change="onTotalChange(txn)" placeholder="0.00">
+                                </div>
+
+                                <div class="field-group">
+                                    <span class="label">Invoice Number</span>
+                                    <input type="text" class="input-field" ng-model="txn.invoiceNumber"
+                                        placeholder="Optional">
+                                </div>
+                            </div>
+
+                        </fieldset>
+                    </div>
+
+                    <!-- Footer Actions Area -->
+                    <div class="footer">
+                        <div class="attachments">
+                            <!-- Trigger upload input when no file is chosen -->
+                            <label class="attachment-link" ng-if="!txn.fileObj" style="cursor: pointer;">
+                                <input type="file" file-model="txn.fileObj" style="display:none;" id="file-{{$index}}">
+                                <svg class="attachment-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                </svg>
+                                Add Receipt / Bill
+                            </label>
+
+                            <!-- Document feedback links when file object is selected -->
+                            <span class="attachment-link" ng-if="txn.fileObj" style="font-weight: 600;">
+                                <svg class="attachment-icon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                <span class="upload-file-name">{{txn.fileObj.name}}</span>
+                                <button type="button"
+                                    style="background: none; border: none; color: #f43f5e; cursor: pointer; font-size: 14px; margin-left: 2px;"
+                                    ng-click="removeFile(txn, $index); $event.stopPropagation();"
+                                    title="Remove attachment">×</button>
+                            </span>
+
+                            <button type="button" class="action-btn-compact" ng-if="txn.fileObj"
+                                ng-click="autoFillBill(txn, $index)" ng-disabled="txn.isExtracting"
+                                style="margin-left: 8px;">
+                                <span ng-if="!txn.isExtracting">✨ Auto-Fill Details</span>
+                                <span ng-if="txn.isExtracting">⏳ Scanning...</span>
+                            </button>
+
+                            <div class="save-to-bills-checkbox-wrapper" ng-if="txn.fileObj" style="margin-left: 12px;">
+                                <label class="save-to-bills-label"
+                                    style="display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--violet); letter-spacing: 0.5px;">
+                                    <input type="checkbox" ng-model="txn.saveToBills"
+                                        style="width: 14px; height: 14px; accent-color: var(--violet);">
+                                    🧾 Save in "Bills"?
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Trash Button to delete entry -->
+                        <button type="button" class="trash-btn" title="Delete entry"
+                            ng-click="removeCard($index); $event.stopPropagation();"
+                            ng-if="transactions.length > 1 && !isSubmitting">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="3 6 5 6 21 6"></polyline>
+                                <path
+                                    d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                                </path>
+                                <line x1="10" y1="11" x2="10" y2="17"></line>
+                                <line x1="14" y1="11" x2="14" y2="17"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+        </form>
+
+        <div class="sticky-footer">
+            <button type="button" class="btn btn-submit" ng-click="submitAll()"
+                ng-disabled="isSubmitting || transactions.length === 0">
+                ✓ Submit All <span class="card-count">{{transactions.length}}</span>
+                <span class="new-item-count" ng-if="newItemCount() > 0">✦ {{newItemCount()}} new</span>
+            </button>
+            <button type="button" class="btn btn-add" ng-click="addTransactionCard(false)" ng-disabled="isSubmitting">
+                + Add Card
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Dynamic Modals ── -->
+    <div class="modal-overlay" ng-if="modals.prevTxn">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Previous Transactions</h3>
+                <input type="text" ng-model="searchPrev" placeholder="Search transactions…">
+            </div>
+            <div class="modal-body" style="padding:0;">
+                <div style="text-align:center;padding:24px;color:var(--text-muted);" ng-if="isLoadingPrev">Loading…
+                </div>
+                <table class="txn-table" ng-if="!isLoadingPrev">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Site</th>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="pt in prevTransactions | filter:searchPrev">
+                            <td><input type="checkbox" ng-model="pt.selected"></td>
+                            <td>{{pt.timestamp}}</td>
+                            <td>{{pt.type}}</td>
+                            <td>{{pt.site}}</td>
+                            <td>{{pt.itemName}}</td>
+                            <td>{{pt.qty}}</td>
+                            <td>{{pt.unit}}</td>
+                        </tr>
+                        <tr ng-if="prevTransactions.length === 0">
+                            <td colspan="7" style="text-align:center;color:var(--text-faint);padding:24px;">No
+                                transactions found.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('prevTxn')">Cancel</button>
+                <button class="modal-btn btn-primary" ng-click="useSelectedPrevTxns()">Use Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" ng-if="modals.addCategory">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Category</h3>
+            </div>
+            <div class="modal-body">
+                <label>Category Name *</label>
+                <input type="text" ng-model="newCat.name" placeholder="e.g., Hardware">
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('addCategory')">Cancel</button>
+                <button class="modal-btn btn-primary" ng-click="submitNewCategory()"
+                    ng-disabled="isModalSubmitting">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" ng-if="modals.addItem">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Item</h3>
+            </div>
+            <div class="modal-body">
+                <div class="row row-2" style="max-width:100%; margin-bottom:14px;">
+                    <div class="field-group">
+                        <span class="label">Item Name *</span>
+                        <input type="text" class="input-field" ng-model="newItem.itemName" required>
+                    </div>
+                    <div class="field-group">
+                        <span class="label">Category *</span>
+                        <select class="input-field" ng-model="newItem.itemCategory" required>
+                            <option value="">Select Category</option>
+                            <option ng-repeat="cat in categories" value="{{cat}}">{{cat}}</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row row-3" style="max-width:100%; margin-bottom:14px;">
+                    <div class="field-group">
+                        <span class="label">Unit *</span>
+                        <input type="text" class="input-field" ng-model="newItem.itemUnit" required>
+                    </div>
+                    <div class="field-group">
+                        <span class="label">Initial Qty</span>
+                        <input type="number" class="input-field" ng-model="newItem.currentQty" placeholder="0">
+                    </div>
+                    <div class="field-group">
+                        <span class="label">Rate (₹)</span>
+                        <input type="number" class="input-field" ng-model="newItem.rate" placeholder="0">
+                    </div>
+                </div>
+                <div class="row" style="max-width:100%;">
+                    <div class="field-group">
+                        <span class="label">Item Image (Optional)</span>
+                        <input type="file" id="itemImageFileInput" accept="image/*">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('addItem')">Cancel</button>
+                <button class="modal-btn btn-primary" ng-click="submitNewItem()"
+                    ng-disabled="isModalSubmitting">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BILL MANAGER MODAL -->
+    <div class="modal-overlay" ng-if="modals.billManager">
+        <div class="modal-content"
+            style="max-width:920px;width:96%;max-height:92vh;display:flex;flex-direction:column;">
+
+            <div class="modal-header"
+                style="background:var(--navy);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:18px 22px 14px;">
+                <h3 style="color:#fff;margin:0 0 4px;font-size:1.05rem;">🧾 Bill Manager</h3>
+                <p style="margin:0;font-family:var(--font-mono);font-size:0.72rem;color:rgba(255,255,255,0.45);">Upload
+                    → AI Extract → Review → Save to Bills Sheet</p>
+            </div>
+
+            <div class="modal-body" style="overflow-y:auto;flex:1;padding:0;">
+
+                <!-- ── STEP 1 : FILE UPLOAD ── -->
+                <div style="padding:20px 22px;border-bottom:1px solid var(--border);">
+                    <div
+                        style="font-weight:700;font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;">
+                        Step 1 — Upload Bill / Receipt</div>
+
+                    <div class="upload-zone" ng-hide="bill.fileObj" ng-click="triggerBillFileInput()"
+                        style="text-align:center;padding:28px;cursor:pointer;border: 1px dashed var(--border-dark); border-radius: 8px;">
+                        <input type="file" id="billFileInput" style="display:none;" accept="image/*,application/pdf"
+                            onchange="angular.element(this).scope().onBillFileSelected(this.files[0])">
+                        <div style="font-size:2.2rem;margin-bottom:8px;">📄</div>
+                        <div style="font-size:0.88rem;font-weight:600;color:var(--text-muted);">Click to upload bill or
+                            receipt</div>
+                        <div style="font-size:0.75rem;color:var(--text-faint);margin-top:4px;">PDF &amp; images
+                            supported · max 5 MB</div>
+                    </div>
+
+                    <div ng-if="bill.fileObj"
+                        style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--surface);border-radius:var(--radius-md);border:1.5px solid var(--border);">
+                        <span style="font-size:1.4rem;">📎</span>
+                        <span
+                            style="font-size:0.88rem;font-weight:600;color:var(--text-main);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{bill.fileObj.name}}</span>
+                        <button type="button" class="upload-clear" ng-click="clearBillFile()"
+                            style="flex-shrink:0; background:none; border:none; cursor:pointer; color:var(--rose);">×
+                            Remove</button>
+                        <button type="button" class="action-btn" ng-disabled="bill.isExtracting"
+                            ng-click="extractBillData()"
+                            style="flex-shrink:0;color:var(--violet);border-color:rgba(124,58,237,.35);background:var(--violet-bg);padding:7px 16px;font-size:0.8rem;">
+                            <span ng-if="!bill.isExtracting">✨ AI Auto-Extract</span>
+                            <span ng-if="bill.isExtracting">⏳ Scanning…</span>
+                        </button>
+                    </div>
+
+                    <div style="margin-top:12px;text-align:right;" ng-hide="bill.showForm">
+                        <button type="button" class="action-btn" ng-click="startManualBill()"
+                            style="font-size:0.78rem;padding:6px 14px; color:var(--navy); border-color:var(--border-dark);">
+                            ✏️ Enter Bill Manually (no file)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ── STEP 2 : REVIEW FORM ── -->
+                <div style="padding:20px 22px;" ng-if="bill.showForm">
+                    <div
+                        style="font-weight:700;font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:16px;">
+                        Step 2 — Review &amp; Edit Bill Details</div>
+
+                    <div style="display:grid;grid-template-columns: repeat(5, 1fr);gap:14px;margin-bottom:14px;">
+                        <div>
+                            <label class="label">Bill Date</label>
+                            <input type="date" class="input-field" ng-model="bill.billDate">
+                        </div>
+                        <div>
+                            <label class="label">Invoice No.</label>
+                            <input type="text" class="input-field" ng-model="bill.invoiceNo" placeholder="e.g. INV-001"
+                                style="font-family:var(--font-mono);">
+                        </div>
+                        <div>
+                            <label class="label">Vendor Name</label>
+                            <input type="text" class="input-field" ng-model="bill.vendorName"
+                                placeholder="e.g. Jindal, Veka">
+                        </div>
+                        <div>
+                            <label class="label">Site Location</label>
+                            <div class="input-wrapper">
+                                <input type="text" class="input-field" ng-model="bill.siteLocation" list="siteList"
+                                    placeholder="Select or type…">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label">Pi No. for glass Bills</label>
+                            <input type="text" class="input-field" ng-model="bill.piNo" placeholder="e.g. PI-10829"
+                                style="font-family:var(--font-mono);">
+                        </div>
+                    </div>
+
+                    <div class="row row-2" style="max-width:100%; margin-bottom:20px;">
+                        <div>
+                            <label class="label">Additional Data From Bill</label>
+                            <textarea class="input-field" ng-model="bill.additionalData" rows="2" style="height:auto;"
+                                placeholder="Any extra raw data…"></textarea>
+                        </div>
+                        <div>
+                            <label class="label">Additional Description</label>
+                            <textarea class="input-field" ng-model="bill.additionalDescription" rows="2"
+                                style="height:auto;" placeholder="Notes, remarks…"></textarea>
+                        </div>
+                    </div>
+
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--border);padding-top:16px;margin-bottom:14px;">
+                        <div
+                            style="font-weight:700;font-size:0.78rem;color:var(--text-main);text-transform:uppercase;letter-spacing:.04em;">
+                            Line Items
+                            <span
+                                style="background:var(--blue);color:#fff;font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:20px;margin-left:8px;">{{bill.items.length}}</span>
+                        </div>
+                        <button type="button" class="action-btn" ng-click="addBillItem()"
+                            style="font-size:0.78rem;padding:6px 14px; color:var(--navy); border-color:var(--border-dark);">+
+                            Add Item</button>
+                    </div>
+
+                    <div ng-repeat="item in bill.items track by $index"
+                        style="background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-md);padding:14px 16px 12px;margin-bottom:10px;position:relative;">
+                        <button type="button" class="btn-remove" ng-click="removeBillItem($index)"
+                            style="position:absolute;top:9px;right:10px;font-size:0.72rem;padding:3px 9px;">✕</button>
+                        <div style="display:grid;grid-template-columns:3fr 1fr 1fr 1fr;gap:12px;padding-right:56px;">
+                            <div>
+                                <label class="label">Item Description</label>
+                                <input type="text" class="input-field" ng-model="item.itemName"
+                                    placeholder="e.g. uPVC Section, Glass, Fasteners">
+                            </div>
+                            <div>
+                                <label class="label">Qty</label>
+                                <input type="text" class="input-field" ng-model="item.qty" placeholder="1">
+                            </div>
+                            <div>
+                                <label class="label">Unit</label>
+                                <input type="text" class="input-field" ng-model="item.unit" placeholder="pcs">
+                            </div>
+                            <div>
+                                <label class="label">Amount (₹)</label>
+                                <input type="number" step="0.01" class="input-field" ng-model="item.totalAmount"
+                                    placeholder="0.00">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div ng-if="bill.items.length === 0"
+                        style="text-align:center;padding:24px;color:var(--text-faint);font-style:italic;border:1.5px dashed var(--border);border-radius:var(--radius-md);font-size:0.85rem;">
+                        No items yet — use AI Auto-Extract or click "+ Add Item"
+                    </div>
+
+                    <div ng-if="bill.items.length > 0"
+                        style="margin-top:14px;text-align:right;font-family:var(--font-mono);font-size:0.85rem;color:var(--text-muted);">
+                        Total Bill Value :
+                        <strong style="color:var(--text-main);font-size:1rem;margin-left:6px;">
+                            ₹ {{ billTotal() | number:2 }}
+                        </strong>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('billManager')">Cancel</button>
+                <button class="modal-btn btn-secondary" ng-if="bill.showForm" ng-click="openBillHistory()"
+                    style="border-color:var(--border-dark);">📋 View History</button>
+                <button class="modal-btn btn-primary" ng-click="saveBillToSheet()"
+                    ng-disabled="bill.isSaving || !bill.showForm || bill.items.length === 0" style="min-width:160px;">
+                    <span ng-if="!bill.isSaving">💾 Save to Bills Sheet</span>
+                    <span ng-if="bill.isSaving">⏳ Saving…</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- BILL HISTORY MODAL -->
+    <div class="modal-overlay" ng-if="modals.billHistory">
+        <div class="modal-content large" style="max-width:1020px;">
+            <div class="modal-header">
+                <h3>📋 Bills Sheet Records</h3>
+                <p style="margin:6px 0 0;font-size:0.8rem;color:var(--text-muted);">Last 50 entries · newest first</p>
+            </div>
+            <div class="modal-body" style="padding:0;overflow-y:auto;max-height:60vh;">
+                <div style="text-align:center;padding:32px;color:var(--text-muted);" ng-if="bill.isLoadingHistory">
+                    Loading records…
+                </div>
+                <table class="txn-table" ng-if="!bill.isLoadingHistory">
+                    <thead>
+                        <tr>
+                            <th>Bill ID</th>
+                            <th>Date</th>
+                            <th>Site</th>
+                            <th>Vendor</th>
+                            <th>Item</th>
+                            <th>Qty</th>
+                            <th>Unit</th>
+                            <th>Amount (₹)</th>
+                            <th>Invoice No.</th>
+                            <th>PI No.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr ng-repeat="log in bill.historyLogs track by $index">
+                            <td style="font-family:var(--font-mono);font-size:0.73rem;color:var(--text-muted);">
+                                {{log.id}}</td>
+                            <td style="white-space:nowrap;">{{log.billDate}}</td>
+                            <td>{{log.siteLocation}}</td>
+                            <td style="font-weight:600;">{{log.vendorName}}</td>
+                            <td>{{log.itemName}}</td>
+                            <td>{{log.qty}}</td>
+                            <td>{{log.unit}}</td>
+                            <td style="font-family:var(--font-mono);font-weight:600;">{{log.totalAmount | number:2}}
+                            </td>
+                            <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">
+                                {{log.invoiceNo}}</td>
+                            <td style="font-family:var(--font-mono);font-size:0.8rem;color:var(--text-muted);">
+                                {{log.piNo}}</td>
+                        </tr>
+                        <tr ng-if="!bill.historyLogs || bill.historyLogs.length === 0">
+                            <td colspan="10"
+                                style="text-align:center;color:var(--text-faint);padding:32px;font-style:italic;">No
+                                records found in the Bills sheet.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('billHistory')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- IMAGE LIGHTBOX -->
+    <div class="image-lightbox" ng-if="lightbox.show" ng-click="closeImageLightbox()">
+        <div class="lightbox-toolbar" ng-click="$event.stopPropagation()">
+            <div class="lightbox-title">
+                {{lightbox.itemName}}
+                <small>Item Image · Google Drive</small>
+            </div>
+            <div class="lightbox-actions">
+                <a ng-href="{{lightbox.driveUrl}}" target="_blank" class="lightbox-btn" ng-if="lightbox.driveUrl">
+                    ↗ Open in Drive
+                </a>
+                <button class="lightbox-btn close-btn" ng-click="closeImageLightbox()">&times;</button>
+            </div>
+        </div>
+        <img ng-src="{{lightbox.imageUrl}}" class="lightbox-image" alt="{{lightbox.itemName}}"
+            ng-click="$event.stopPropagation()">
+    </div>
+
+    <!-- KEYBOARD SHORTCUTS MODAL -->
+    <div class="modal-overlay" ng-if="modals.shortcuts" ng-click="closeModal('shortcuts')">
+        <div class="modal-content large" ng-click="$event.stopPropagation()" style="max-width:720px;">
+            <div class="modal-header">
+                <h3>⌨️ Keyboard Shortcuts</h3>
+                <p style="margin:6px 0 0;font-size:0.8rem;color:var(--text-muted);">Navigate and fill forms entirely from keyboard</p>
+            </div>
+            <div class="modal-body" style="padding:20px 22px;">
+                <div class="shortcuts-grid">
+
+                    <div class="shortcut-divider">Card Navigation</div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Next card</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">↓</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Previous card</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">↑</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Add new card</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">N</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Delete current card</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">⌫</span></span>
+                    </div>
+
+                    <div class="shortcut-divider">Transaction Type</div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Set type → In</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">1</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Set type → Out</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">2</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Set type → Repair</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">3</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Set type → Direct</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">4</span></span>
+                    </div>
+
+                    <div class="shortcut-divider">Form Fields (Active Card)</div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Focus Site Name</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">S</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Focus Item Name</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">E</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Focus Quantity</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">Q</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Focus Rate</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">R</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Move between fields</span>
+                        <span class="shortcut-keys"><span class="kbd">Tab</span> / <span class="kbd">Shift</span><span class="kbd">Tab</span></span>
+                    </div>
+
+                    <div class="shortcut-divider">Actions & Modals</div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Submit all</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">Enter</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Open History</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">H</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Add Category</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">C</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Add Item</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">I</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Open Bills</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">B</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Close modal / lightbox</span>
+                        <span class="shortcut-keys"><span class="kbd">Esc</span></span>
+                    </div>
+
+                    <div class="shortcut-divider">General</div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Toggle dark / light</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">T</span></span>
+                    </div>
+                    <div class="shortcut-row">
+                        <span class="shortcut-label">Show this panel</span>
+                        <span class="shortcut-keys"><span class="kbd">Alt</span><span class="kbd">K</span></span>
+                    </div>
+
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn btn-secondary" ng-click="closeModal('shortcuts')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <datalist id="siteList">
+        <option ng-repeat="site in sites track by $index" value="{{site}}"></option>
+    </datalist>
+
+    <script>
+        var app = angular.module('InventoryApp', []);
+
+        app.directive('fileModel', ['$parse', function ($parse) {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    var model = $parse(attrs.fileModel);
+                    element.bind('change', function () {
+                        scope.$apply(function () { model.assign(scope, element[0].files[0]); });
+                    });
+                }
+            };
+        }]);
+
+        app.directive('imageErrorFallback', function () {
+            return {
+                restrict: 'A',
+                link: function (scope, element, attrs) {
+                    element.bind('error', function () {
+                        scope.$apply(function () {
+                            scope.$eval(attrs.imageErrorFallback);
+                        });
+                    });
+                }
+            };
+        });
+
+        app.controller('MainCtrl', function ($scope, $q, $timeout) {
+            $scope.sites = [];
+            $scope.categories = [];
+            $scope.inventoryData = {};
+            $scope.userEmail = "";
+            $scope.isLoading = true;
+            $scope.isSubmitting = false;
+            $scope.transactions = [];
+            $scope.submitAttempted = false;
+            $scope.hasDraft = false;
+            $scope.isResetting = false;
+            $scope.isDraftLoading = false;
+            $scope.isModalSubmitting = false;
+            $scope.activeCardIndex = 0;
+            $scope.modals = { prevTxn: false, addCategory: false, addItem: false, billManager: false, billHistory: false, shortcuts: false };
+            $scope.newCat = {};
+            $scope.newItem = {};
+            $scope.prevTransactions = [];
+            $scope.isLoadingPrev = false;
+            $scope.searchPrev = "";
+            const fileDataCache = new WeakMap();
+            const DRAFT_KEY = 'inventory_manager_draft';
+            const THEME_KEY = 'inventory_manager_theme';
+
+            // ── Dark Mode ──────────────────────────────────────────────────────────────
+            $scope.isDarkMode = localStorage.getItem(THEME_KEY) === 'dark';
+
+            $scope.toggleTheme = function () {
+                $scope.isDarkMode = !$scope.isDarkMode;
+                localStorage.setItem(THEME_KEY, $scope.isDarkMode ? 'dark' : 'light');
+            };
+
+            // ── Keyboard Shortcuts ──────────────────────────────────────────────────────
+            function getActiveCardEl() {
+                var cards = document.querySelectorAll('.txn-card');
+                return cards[$scope.activeCardIndex] || null;
+            }
+
+            function focusFieldInCard(selector) {
+                var card = getActiveCardEl();
+                if (!card) return;
+                var el = card.querySelector(selector);
+                if (el) { el.focus(); el.select && el.select(); }
+            }
+
+            function hasAnyModalOpen() {
+                for (var key in $scope.modals) {
+                    if ($scope.modals[key]) return true;
+                }
+                return $scope.lightbox.show;
+            }
+
+            function closeAllModals() {
+                for (var key in $scope.modals) {
+                    if ($scope.modals[key]) {
+                        $scope.closeModal(key);
+                        return true;
+                    }
+                }
+                if ($scope.lightbox.show) {
+                    $scope.closeImageLightbox();
+                    return true;
+                }
+                return false;
+            }
+
+            document.addEventListener('keydown', function (e) {
+                // Escape — close any open modal or lightbox
+                if (e.key === 'Escape') {
+                    $scope.$apply(function () { closeAllModals(); });
+                    return;
+                }
+
+                // All other shortcuts require Alt
+                if (!e.altKey) return;
+
+                var key = e.key.toLowerCase();
+                var handled = true;
+
+                $scope.$apply(function () {
+                    if ($scope.isSubmitting || $scope.isLoading) return;
+
+                    var txn = $scope.transactions[$scope.activeCardIndex];
+                    var types = ['In', 'Out', 'Repair', 'Direct'];
+
+                    switch (key) {
+                        // ── Card Navigation ──
+                        case 'arrowdown':
+                            if ($scope.activeCardIndex < $scope.transactions.length - 1) {
+                                $scope.activeCardIndex++;
+                                $timeout(function () {
+                                    var c = getActiveCardEl();
+                                    if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 50);
+                            }
+                            break;
+                        case 'arrowup':
+                            if ($scope.activeCardIndex > 0) {
+                                $scope.activeCardIndex--;
+                                $timeout(function () {
+                                    var c = getActiveCardEl();
+                                    if (c) c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }, 50);
+                            }
+                            break;
+                        case 'n':
+                            if (!hasAnyModalOpen()) $scope.addTransactionCard(false);
+                            break;
+                        case 'backspace':
+                            if (!hasAnyModalOpen() && $scope.transactions.length > 1) {
+                                $scope.removeCard($scope.activeCardIndex);
+                            }
+                            break;
+
+                        // ── Transaction Type (Alt+1/2/3/4) ──
+                        case '1': case '2': case '3': case '4':
+                            if (txn && !hasAnyModalOpen()) {
+                                txn.transactionType = types[parseInt(key) - 1];
+                                $scope.recalculateRunningStocks();
+                            }
+                            break;
+
+                        // ── Field Focus ──
+                        case 's':
+                            if (!hasAnyModalOpen()) {
+                                $timeout(function () { focusFieldInCard('input[ng-model="txn.siteName"]'); }, 50);
+                            }
+                            break;
+                        case 'e':
+                            if (!hasAnyModalOpen()) {
+                                $timeout(function () { focusFieldInCard('input[ng-model="txn.searchName"]'); }, 50);
+                            }
+                            break;
+                        case 'q':
+                            if (!hasAnyModalOpen()) {
+                                $timeout(function () { focusFieldInCard('input[ng-model="txn.quantity"]'); }, 50);
+                            }
+                            break;
+                        case 'r':
+                            if (!hasAnyModalOpen()) {
+                                $timeout(function () { focusFieldInCard('input[ng-model="txn.rateOverride"]'); }, 50);
+                            }
+                            break;
+
+                        // ── Actions ──
+                        case 'enter':
+                            if (!hasAnyModalOpen()) $scope.submitAll();
+                            break;
+
+                        // ── Modals ──
+                        case 'h':
+                            if (!hasAnyModalOpen()) $scope.openModal('prevTxn');
+                            break;
+                        case 'c':
+                            if (!hasAnyModalOpen()) $scope.openModal('addCategory');
+                            break;
+                        case 'i':
+                            if (!hasAnyModalOpen()) $scope.openModal('addItem');
+                            break;
+                        case 'b':
+                            if (!hasAnyModalOpen()) $scope.openModal('billManager');
+                            break;
+                        case 'k':
+                            if ($scope.modals.shortcuts) {
+                                $scope.closeModal('shortcuts');
+                            } else {
+                                $scope.openModal('shortcuts');
+                            }
+                            break;
+
+                        // ── Theme ──
+                        case 't':
+                            $scope.toggleTheme();
+                            break;
+
+                        default:
+                            handled = false;
+                    }
+                });
+
+                if (handled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            });
+
+            // ── Bill Manager State ──────────────────────────────────────────────────────
+            $scope.bill = {
+                isExtracting: false,
+                isSaving: false,
+                isLoadingHistory: false,
+                showForm: false,
+                fileObj: null,
+                fileDataUrl: null,
+                billDate: null,
+                invoiceNo: '',
+                vendorName: '',
+                siteLocation: '',
+                piNo: '',
+                additionalData: '',
+                additionalDescription: '',
+                items: [],
+                historyLogs: []
+            };
+
+            $scope.billTotal = function () {
+                return ($scope.bill.items || []).reduce(function (sum, item) {
+                    return sum + (parseFloat(item.totalAmount) || 0);
+                }, 0);
+            };
+
+            $scope.newItemCount = function () {
+                return $scope.transactions.filter(t => t.isNewItem && t.name).length;
+            };
+
+            $scope.setActiveCard = function (index) { $scope.activeCardIndex = index; };
+
+            // ── Image Lightbox ──────────────────────────────────────────────────────────
+            $scope.lightbox = { show: false, imageUrl: '', itemName: '', driveUrl: '' };
+
+            function getHighResUrl(url) {
+                if (!url) return '';
+                if (url.includes('/thumbnail?')) {
+                    return url.replace(/sz=[ws]\d+/, 'sz=w800');
+                }
+                return url;
+            }
+
+            function getDrivePageUrl(url) {
+                if (!url) return '';
+                var match = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+                if (match) {
+                    return 'https://drive.google.com/file/d/' + match[1] + '/view';
+                }
+                return url;
+            }
+
+            function parseStringToLocalDate(dateStr) {
+                if (!dateStr) return new Date();
+                let parts = dateStr.trim().split(/[-/]/);
+                if (parts.length === 3) {
+                    if (parts[0].length === 4) {
+                        let dayPart = parts[2].split(' ')[0];
+                        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(dayPart, 10));
+                    } else {
+                        let yearPart = parts[2].split(' ')[0];
+                        if (yearPart.length === 4) {
+                            return new Date(parseInt(yearPart, 10), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
+                        }
+                    }
+                }
+                return new Date(dateStr);
+            }
+
+            $scope.getDrivePageUrlPublic = getDrivePageUrl;
+
+            $scope.openImageLightbox = function (url, name) {
+                $scope.lightbox.imageUrl = getHighResUrl(url);
+                $scope.lightbox.itemName = name || 'Item Image';
+                $scope.lightbox.driveUrl = getDrivePageUrl(url);
+                $scope.lightbox.show = true;
+            };
+
+            $scope.closeImageLightbox = function () {
+                $scope.lightbox.show = false;
+                $scope.lightbox.imageUrl = '';
+                $scope.lightbox.itemName = '';
+                $scope.lightbox.driveUrl = '';
+            };
+
+            $scope.openFullImage = function (url) {
+                if (url) window.open(getDrivePageUrl(url), '_blank');
+            };
+
+            let draftTimer;
+            $scope.saveDraft = function () {
+                if ($scope.isLoading || $scope.isSubmitting || $scope.isResetting || $scope.isDraftLoading) return;
+                if (draftTimer) $timeout.cancel(draftTimer);
+                draftTimer = $timeout(function () {
+                    const draftData = $scope.transactions.map(txn => {
+                        const temp = { ...txn };
+                        delete temp.fileObj;
+                        delete temp.newItemImageFileObj;
+                        delete temp.newItemImageSrc;
+                        delete temp.availableOptions;
+                        if (temp.transactionDateTime) {
+                            const dateObj = (temp.transactionDateTime instanceof Date) ? temp.transactionDateTime : new Date(temp.transactionDateTime);
+                            temp.transactionDateTime = dateObj.toISOString();
+                        }
+                        return angular.copy(temp);
+                    });
+                    localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData));
+                    $scope.hasDraft = true;
+                }, 1000);
+            };
+
+            $scope.clearDraft = function () { localStorage.removeItem(DRAFT_KEY); $scope.hasDraft = false; };
+
+            $scope.$watch('transactions', function (newVal, oldVal) {
+                if ($scope.isDraftLoading) return;
+                if (newVal) {
+                    newVal.forEach((txn, index) => {
+                        if (!txn.fileObj && txn.saveToBills) {
+                            txn.saveToBills = false;
+                        }
+                        // Automated Preview Engine: Resolves files without relying on inline DOM elements
+                        if (txn.newItemImageFileObj && !txn.newItemImageSrc) {
+                            const reader = new FileReader();
+                            reader.onload = function (e) {
+                                $timeout(function () {
+                                    txn.newItemImageSrc = e.target.result;
+                                });
+                            };
+                            reader.readAsDataURL(txn.newItemImageFileObj);
+                        }
+                    });
+                }
+                if (newVal !== oldVal && !$scope.isResetting && !$scope.isSubmitting && newVal.length > 0) $scope.saveDraft();
+            }, true);
+
+            $scope.manualClearDraft = function () {
+                if (!confirm("Delete all cards and start fresh?")) return;
+                $scope.isResetting = true;
+                $scope.clearDraft();
+                $scope.transactions = [];
+                $timeout(function () {
+                    $scope.addTransactionCard(true);
+                    $scope.isResetting = false;
+                    alert("Draft cleared.");
+                });
+            };
+
+            $scope.loadData = function () {
+                $scope.isLoading = true;
+                google.script.run.withSuccessHandler(function (data) {
+                    $timeout(function () {
+                        $scope.sites = data.sites || [];
+                        $scope.categories = data.categories || [];
+                        $scope.inventoryData = data.itemsByCategory || {};
+                        $scope.userEmail = data.userEmail || "";
+                        if (!$scope.tryLoadDraft()) $scope.addTransactionCard(true);
+                        $scope.isLoading = false;
+                    });
+                }).withFailureHandler(function (err) {
+                    $timeout(function () {
+                        alert("Error loading data: " + err);
+                        $scope.isLoading = false;
+                        $scope.addTransactionCard(true);
+                    });
+                }).getDropdownData();
+            };
+            $scope.loadData();
+
+            $scope.tryLoadDraft = function () {
+                const saved = localStorage.getItem(DRAFT_KEY);
+                if (!saved) return false;
+                try {
+                    const draft = JSON.parse(saved);
+                    if (!draft || draft.length === 0) return false;
+                    $scope.isDraftLoading = true;
+                    draft.forEach(txn => {
+                        if (txn.transactionDateTime) txn.transactionDateTime = new Date(txn.transactionDateTime);
+                        txn.availableOptions = txn.category && $scope.inventoryData[txn.category]
+                            ? $scope.inventoryData[txn.category] : getAllItems();
+                    });
+                    $scope.transactions = draft;
+                    $scope.activeCardIndex = $scope.transactions.length - 1;
+                    $scope.recalculateRunningStocks();
+                    $scope.hasDraft = true;
+                    $timeout(function () {
+                        $scope.isDraftLoading = false;
+                    }, 0, false);
+                    return true;
+                } catch (e) { localStorage.removeItem(DRAFT_KEY); return false; }
+            };
+
+            function getAllItems() {
+                let all = [];
+                for (let cat in $scope.inventoryData) {
+                    $scope.inventoryData[cat].forEach(item => { if (!item.category) item.category = cat; });
+                }
+                for (let cat in $scope.inventoryData) {
+                    all = all.concat($scope.inventoryData[cat]);
+                }
+                return all;
+            }
+
+            $scope.openModal = function (name) {
+                $scope.modals[name] = true;
+                if (name === 'prevTxn') {
+                    $scope.isLoadingPrev = true;
+                    google.script.run.withSuccessHandler(function (res) {
+                        $timeout(function () { $scope.prevTransactions = res || []; $scope.isLoadingPrev = false; });
+                    }).withFailureHandler(function (err) {
+                        $timeout(function () { alert("Error: " + err); $scope.isLoadingPrev = false; });
+                    }).getRecentTransactions(50);
+                }
+            };
+
+            $scope.closeModal = function (name) {
+                $scope.modals[name] = false;
+                $scope.newCat = {};
+                $scope.newItem = {};
+                if (name === 'billManager') {
+                    $scope.bill.showForm = false;
+                    $scope.bill.isExtracting = false;
+                    $scope.bill.isSaving = false;
+                }
+            };
+
+            // ── BILL MANAGER FUNCTIONS ─────────────────────────────────────────────────
+
+            $scope.triggerBillFileInput = function () {
+                document.getElementById('billFileInput').click();
+            };
+
+            $scope.onBillFileSelected = function (file) {
+                if (!file) return;
+                $scope.$apply(function () {
+                    $scope.bill.fileObj = file;
+                });
+            };
+
+            $scope.clearBillFile = function () {
+                $scope.bill.fileObj = null;
+                $scope.bill.fileDataUrl = null;
+                const inp = document.getElementById('billFileInput');
+                if (inp) inp.value = '';
+            };
+
+            $scope.extractBillData = function () {
+                if (!$scope.bill.fileObj) return;
+                $scope.bill.isExtracting = true;
+
+                const urlReader = new FileReader();
+                urlReader.onload = function (e) { $scope.bill.fileDataUrl = e.target.result; };
+                urlReader.readAsDataURL($scope.bill.fileObj);
+
+                readFile($scope.bill.fileObj).then(function (fileData) {
+                    google.script.run
+                        .withSuccessHandler(function (data) {
+                            $timeout(function () {
+                                $scope.bill.isExtracting = false;
+                                if (!data) { alert("No data returned from AI. Try again."); return; }
+
+                                $scope.bill.billDate = data.billDate ? parseStringToLocalDate(data.billDate) : new Date();
+                                $scope.bill.invoiceNo = data.invoiceNo || '';
+                                $scope.bill.vendorName = data.vendorName || '';
+                                $scope.bill.piNo = data.piNo || '';
+                                $scope.bill.additionalData = data.additionalData || '';
+                                $scope.bill.additionalDescription = data.additionalDescription || '';
+
+                                var rawItems = (data.items && data.items.length) ? data.items : [{}];
+                                $scope.bill.items = rawItems.map(function (item) {
+                                    return {
+                                        itemName: item.itemName || '',
+                                        qty: item.qty || '1',
+                                        unit: item.unit || 'pcs',
+                                        totalAmount: item.totalAmount ? parseFloat(item.totalAmount) : 0
+                                    };
+                                });
+
+                                if (!$scope.bill.siteLocation && $scope.transactions.length > 0 && $scope.transactions[0].siteName) {
+                                    $scope.bill.siteLocation = $scope.transactions[0].siteName;
+                                }
+
+                                $scope.bill.showForm = true;
+                            });
+                        })
+                        .withFailureHandler(function (err) {
+                            $timeout(function () {
+                                $scope.bill.isExtracting = false;
+                                alert("AI extraction failed: " + err);
+                            });
+                        })
+                        .extractBillWithGemini(fileData.data, fileData.mime);
+                }).catch(function (err) {
+                    $timeout(function () {
+                        $scope.bill.isExtracting = false;
+                        alert("File read error: " + err);
+                    });
+                });
+            };
+
+            $scope.startManualBill = function () {
+                $scope.bill.billDate = new Date();
+                $scope.bill.invoiceNo = '';
+                $scope.bill.vendorName = '';
+                $scope.bill.piNo = '';
+                $scope.bill.siteLocation = ($scope.transactions.length > 0) ? ($scope.transactions[0].siteName || '') : '';
+                $scope.bill.additionalData = '';
+                $scope.bill.additionalDescription = '';
+                $scope.bill.items = [{ itemName: '', qty: '1', unit: 'pcs', totalAmount: 0 }];
+                $scope.bill.showForm = true;
+            };
+
+            $scope.addBillItem = function () {
+                $scope.bill.items.push({ itemName: '', qty: '1', unit: 'pcs', totalAmount: 0 });
+            };
+
+            $scope.removeBillItem = function (index) {
+                $scope.bill.items.splice(index, 1);
+            };
+
+            $scope.saveBillToSheet = function () {
+                if (!$scope.bill.items.length) { alert("Please add at least one line item."); return; }
+                $scope.bill.isSaving = true;
+
+                var billDateStr = "";
+                if ($scope.bill.billDate instanceof Date) {
+                    billDateStr = $scope.bill.billDate.toISOString().split('T')[0];
+                } else if ($scope.bill.billDate) {
+                    billDateStr = new Date($scope.bill.billDate).toISOString().split('T')[0];
+                }
+
+                var billData = {
+                    billDate: billDateStr,
+                    invoiceNo: $scope.bill.invoiceNo,
+                    vendorName: $scope.bill.vendorName,
+                    siteLocation: $scope.bill.siteLocation,
+                    piNo: $scope.bill.piNo,
+                    additionalData: $scope.bill.additionalData,
+                    additionalDescription: $scope.bill.additionalDescription,
+                    items: $scope.bill.items,
+                    imageData: null,
+                    imageMime: null,
+                    imageName: null
+                };
+
+                if ($scope.bill.fileDataUrl) {
+                    var parts = $scope.bill.fileDataUrl.split(',');
+                    billData.imageData = parts[1] || null;
+                    billData.imageMime = $scope.bill.fileObj ? $scope.bill.fileObj.type : 'image/jpeg';
+                    billData.imageName = $scope.bill.fileObj ? $scope.bill.fileObj.name : 'receipt.jpg';
+                }
+
+                google.script.run
+                    .withSuccessHandler(function (result) {
+                        $timeout(function () {
+                            $scope.bill.isSaving = false;
+                            alert('✅ ' + result.count + ' bill item(s) saved to the "Bills" sheet!');
+                            $scope.bill.showForm = false;
+                            $scope.bill.fileObj = null;
+                            $scope.bill.fileDataUrl = null;
+                            $scope.bill.items = [];
+                            var inp = document.getElementById('billFileInput');
+                            if (inp) inp.value = '';
+                        });
+                    })
+                    .withFailureHandler(function (err) {
+                        $timeout(function () {
+                            $scope.bill.isSaving = false;
+                            alert('Save failed: ' + err);
+                        });
+                    })
+                    .saveBillItems(billData);
+            };
+
+            $scope.openBillHistory = function () {
+                $scope.bill.isLoadingHistory = true;
+                $scope.bill.historyLogs = [];
+                $scope.modals.billHistory = true;
+
+                google.script.run
+                    .withSuccessHandler(function (logs) {
+                        $timeout(function () {
+                            $scope.bill.historyLogs = logs || [];
+                            $scope.bill.isLoadingHistory = false;
+                        });
+                    })
+                    .withFailureHandler(function (err) {
+                        $timeout(function () {
+                            $scope.bill.isLoadingHistory = false;
+                            alert('Failed to load bill history: ' + err);
+                        });
+                    })
+                    .getHistoryLogs();
+            };
+
+            $scope.submitNewCategory = function () {
+                if (!$scope.newCat.name?.trim()) { alert("Please enter a category name."); return; }
+                $scope.isModalSubmitting = true;
+                google.script.run.withSuccessHandler(function (res) {
+                    $timeout(function () {
+                        // Merge new category into local state — no full reload needed
+                        var newSheetName = res.sheetName;
+                        if (newSheetName && $scope.categories.indexOf(newSheetName) === -1) {
+                            $scope.categories.push(newSheetName);
+                            $scope.inventoryData[newSheetName] = [];
+                        }
+                        alert(res.message || "Category added!");
+                        $scope.closeModal('addCategory');
+                        $scope.isModalSubmitting = false;
+                    });
+                }).withFailureHandler(function (err) {
+                    $timeout(function () { alert("Error: " + err); $scope.isModalSubmitting = false; });
+                }).addCategory($scope.newCat.name.trim());
+            };
+
+            $scope.submitNewItem = function () {
+                if (!$scope.newItem.itemName || !$scope.newItem.itemCategory || !$scope.newItem.itemUnit) { alert("Fill all required fields."); return; }
+
+                const fileInput = document.getElementById('itemImageFileInput');
+                const imageFile = fileInput ? fileInput.files[0] : null;
+
+                $scope.isModalSubmitting = true;
+
+                readFile(imageFile).then(fileData => {
+                    const payload = {
+                        itemName: $scope.newItem.itemName,
+                        itemCategory: $scope.newItem.itemCategory,
+                        itemUnit: $scope.newItem.itemUnit,
+                        currentQty: $scope.newItem.currentQty,
+                        rate: $scope.newItem.rate,
+                        imageBase64: fileData ? fileData.data : null,
+                        imageMime: fileData ? fileData.mime : null,
+                        imageName: fileData ? fileData.name : null
+                    };
+
+                    google.script.run.withSuccessHandler(function (res) {
+                        $timeout(function () {
+                            // Merge new item into local state — no full reload needed
+                            if (res.item) {
+                                var cat = res.item.category;
+                                if (!$scope.inventoryData[cat]) {
+                                    $scope.inventoryData[cat] = [];
+                                }
+                                $scope.inventoryData[cat].push({
+                                    name: res.item.name,
+                                    stock: res.item.stock,
+                                    unit: res.item.unit,
+                                    rate: res.item.rate,
+                                    imageUrl: res.item.imageUrl || '',
+                                    category: cat,
+                                    searchStr: res.item.name + ' (Stock: ' + res.item.stock + ')'
+                                });
+                                // Update any open cards that have this category selected
+                                $scope.transactions.forEach(function (txn) {
+                                    if (!txn.category || txn.category === cat) {
+                                        txn.availableOptions = txn.category
+                                            ? ($scope.inventoryData[txn.category] || [])
+                                            : getAllItems();
+                                    }
+                                });
+                            }
+                            alert("Item added!");
+                            $scope.closeModal('addItem');
+                            $scope.isModalSubmitting = false;
+                            if (fileInput) fileInput.value = '';
+                        });
+                    }).withFailureHandler(function (err) {
+                        $timeout(function () { alert("Error: " + err); $scope.isModalSubmitting = false; });
+                    }).addItem(payload);
+                }).catch(err => {
+                    $scope.isModalSubmitting = false;
+                    alert("Image processing error: " + err);
+                });
+            };
+
+            $scope.useSelectedPrevTxns = function () {
+                let selected = $scope.prevTransactions.filter(p => p.selected);
+                if (!selected.length) { alert("Select at least one transaction."); return; }
+                let targetIdx = ($scope.transactions.length === 1 && !$scope.transactions[0].name) ? 0 : $scope.transactions.length;
+                selected.forEach(txn => {
+                    let parts = txn.itemName.split('|');
+                    let baseName = parts[0].trim();
+                    let addDesc = parts.length > 1 ? parts[1].trim() : '';
+                    let newCard = {
+                        transactionDateTime: new Date(), siteName: txn.site, transactionType: txn.type,
+                        processedBy: $scope.userEmail,
+                        category: txn.category || '',
+                        itemCategory: txn.category || '',
+                        availableOptions: getAllItems(), searchName: baseName, name: baseName,
+                        quantity: parseFloat(txn.qty) || 0, unit: txn.unit || 'pcs', rate: parseFloat(txn.rate) || 0,
+                        imageUrl: '', currentStock: 0, additionalDescription: addDesc, isNewItem: false, isUntracked: false
+                    };
+                    if (targetIdx < $scope.transactions.length) {
+                        $scope.transactions[targetIdx] = newCard;
+                    } else {
+                        $scope.transactions.push(newCard);
+                    }
+                    $scope.onItemSelect($scope.transactions[targetIdx]);
+                    targetIdx++;
+                });
+                $scope.activeCardIndex = $scope.transactions.length - 1;
+                $scope.saveDraft();
+                $scope.closeModal('prevTxn');
+            };
+
+            $scope.addTransactionCard = function (isFirst) {
+                let newTxn = {
+                    transactionDateTime: new Date(), siteName: '', transactionType: 'In', category: '',
+                    itemCategory: '', availableOptions: getAllItems(), searchName: '', name: '',
+                    quantity: null, unit: '', rate: 0, imageUrl: '', currentStock: 0, unitOverride: '', rateOverride: null,
+                    additionalDescription: '', invoiceNumber: '', fileObj: null, totalAmount: 0,
+                    isNewItem: false, isUntracked: false, saveToBills: false,
+                    newItemImageFileObj: null, newItemImageSrc: null,
+                    processedBy: $scope.userEmail || ''
+                };
+                let insertIndex = $scope.transactions.length;
+                if (!isFirst && $scope.transactions.length > 0) {
+                    let sourceIndex = ($scope.activeCardIndex !== undefined && $scope.activeCardIndex !== null)
+                        ? $scope.activeCardIndex : $scope.transactions.length - 1;
+                    let sourceCard = $scope.transactions[sourceIndex];
+                    if (sourceCard) {
+                        newTxn.transactionDateTime = sourceCard.transactionDateTime ? new Date(sourceCard.transactionDateTime) : new Date();
+                        newTxn.siteName = sourceCard.siteName;
+                        newTxn.transactionType = sourceCard.transactionType;
+                        newTxn.category = sourceCard.category;
+                        newTxn.itemCategory = sourceCard.itemCategory;
+                        newTxn.searchName = sourceCard.searchName;
+                        newTxn.name = sourceCard.name;
+                        newTxn.quantity = sourceCard.quantity;
+                        newTxn.unit = sourceCard.unit;
+                        newTxn.rate = sourceCard.rate;
+                        newTxn.unitOverride = sourceCard.unitOverride;
+                        newTxn.rateOverride = sourceCard.rateOverride;
+                        newTxn.totalAmount = sourceCard.totalAmount;
+                        newTxn.imageUrl = sourceCard.imageUrl;
+                        newTxn.additionalDescription = sourceCard.additionalDescription;
+                        newTxn.invoiceNumber = sourceCard.invoiceNumber;
+
+                        newTxn.fileObj = null;
+                        newTxn.newItemImageFileObj = null;
+                        newTxn.newItemImageSrc = null;
+                        newTxn.saveToBills = false;
+
+                        newTxn.isNewItem = sourceCard.isNewItem || false;
+                        newTxn.isUntracked = sourceCard.isUntracked || false;
+                        newTxn.availableOptions = sourceCard.category && $scope.inventoryData[sourceCard.category]
+                            ? $scope.inventoryData[sourceCard.category] : getAllItems();
+                    }
+                    insertIndex = sourceIndex + 1;
+                }
+                $scope.transactions.splice(insertIndex, 0, newTxn);
+                $scope.activeCardIndex = insertIndex;
+                $timeout(() => {
+                    $scope.recalculateRunningStocks();
+                    const cards = document.querySelectorAll('.txn-card');
+                    if (cards.length > 0 && cards[insertIndex]) {
+                        const newCard = cards[insertIndex];
+                        newCard.classList.add('highlighted-card');
+                        $timeout(() => newCard.classList.remove('highlighted-card'), 2000);
+                        newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            };
+
+            $scope.removeCard = function (index) {
+                if (!confirm("Remove this card?")) return;
+                $scope.transactions.splice(index, 1);
+                if ($scope.activeCardIndex === index) $scope.activeCardIndex = Math.max(0, index - 1);
+                else if ($scope.activeCardIndex > index) $scope.activeCardIndex--;
+                $scope.recalculateRunningStocks();
+                if ($scope.transactions.length === 0) $scope.addTransactionCard(true);
+            };
+
+            $scope.removeFile = function (txn, index) {
+                txn.fileObj = null;
+                txn.saveToBills = false;
+                $timeout(function () {
+                    const fileInput = document.getElementById('file-' + index);
+                    if (fileInput) fileInput.value = '';
+                });
+            };
+
+            $scope.onSidebarClick = function (txn, index) {
+                if (txn.isNewItem) {
+                    if (!txn.newItemImageFileObj) {
+                        const fileInput = document.getElementById('newItemImage-' + index);
+                        if (fileInput) fileInput.click();
+                    }
+                } else if (txn.imageUrl && !txn.isUntracked && txn.name && !txn.imageError) {
+                    $scope.openImageLightbox(txn.imageUrl, txn.name);
+                }
+            };
+
+            $scope.clearNewItemImage = function (txn, index) {
+                txn.newItemImageFileObj = null;
+                txn.newItemImageSrc = null;
+                const fileInput = document.getElementById('newItemImage-' + index);
+                if (fileInput) fileInput.value = '';
+            };
+
+            $scope.recalculateRunningStocks = function () {
+                let stockMap = {};
+                for (let cat in $scope.inventoryData) {
+                    $scope.inventoryData[cat].forEach(item => {
+                        let key = cat.toString().trim().toLowerCase() + '|' + item.name.toString().trim().toLowerCase();
+                        stockMap[key] = parseFloat(item.stock) || 0;
+                    });
+                }
+
+                $scope.transactions.forEach(t => t.isDuplicate = false);
+
+                let keyCount = {};
+                $scope.transactions.forEach((txn) => {
+                    if (!txn.name || !txn.siteName || !txn.quantity) return;
+
+                    const dateKey = txn.transactionDateTime instanceof Date ? txn.transactionDateTime.toDateString() : '';
+
+                    let uniqueKey = [
+                        dateKey,
+                        (txn.siteName || '').trim().toLowerCase(),
+                        (txn.transactionType || '').trim().toLowerCase(),
+                        (txn.name || '').trim().toLowerCase(),
+                        parseFloat(txn.quantity) || 0,
+                        (txn.additionalDescription || '').trim().toLowerCase()
+                    ].join('|');
+
+                    if (!keyCount[uniqueKey]) {
+                        keyCount[uniqueKey] = [];
+                    }
+                    keyCount[uniqueKey].push(txn);
+                });
+
+                for (let key in keyCount) {
+                    if (keyCount[key].length > 1) {
+                        keyCount[key].forEach(txn => {
+                            txn.isDuplicate = true;
+                        });
+                    }
+                }
+
+                $scope.transactions.forEach((txn) => {
+                    if (!txn.name) return;
+                    let key = (txn.itemCategory || txn.category || '').toString().trim().toLowerCase() + '|' + txn.name.toString().trim().toLowerCase();
+                    let currentBase = txn.isNewItem || txn.isUntracked ? 0 : (stockMap[key] !== undefined ? parseFloat(stockMap[key]) : 0);
+                    let qty = parseFloat(txn.quantity) || 0;
+                    txn.currentStock = currentBase;
+                    if (['Out', 'Repair'].includes(txn.transactionType) && !txn.isNewItem && !txn.isUntracked) stockMap[key] = Math.max(0, currentBase - qty);
+                    else if (txn.transactionType === 'In') stockMap[key] = currentBase + qty;
+                });
+            };
+
+            $scope.onItemSelect = function (txn) {
+                const typed = (txn.searchName || '').trim();
+                if (!typed) { txn.isNewItem = false; txn.isUntracked = false; txn.name = ''; txn.imageUrl = ''; txn.imageError = false; return; }
+
+                const found = txn.availableOptions.find(opt =>
+                    (opt.name || '').trim().toLowerCase() === typed.toLowerCase()
+                );
+
+                txn.imageError = false;
+
+                if (found) {
+                    txn.isNewItem = false;
+                    txn.isUntracked = false;
+                    txn.name = found.name;
+                    txn.unit = found.unit || 'pcs';
+                    txn.rate = parseFloat(found.rate) || 0;
+                    txn.imageUrl = found.imageUrl || '';
+                    let actualCategory = found.category;
+                    if (!actualCategory) {
+                        for (let cat in $scope.inventoryData) {
+                            if ($scope.inventoryData[cat].some(i => i.name === found.name)) { actualCategory = cat; break; }
+                        }
+                    }
+                    txn.itemCategory = actualCategory;
+                } else {
+                    if (txn.isNewItem) {
+                        txn.name = typed;
+                        txn.isUntracked = false;
+                    } else {
+                        txn.isNewItem = false;
+                        txn.isUntracked = true;
+                        txn.name = typed;
+                        txn.unit = '';
+                        txn.rate = 0;
+                        txn.imageUrl = '';
+                        txn.currentStock = 0;
+                        txn.itemCategory = txn.category || '';
+                    }
+                }
+                $scope.recalculateRunningStocks();
+                $scope.calcTotal(txn);
+            };
+
+            $scope.enableNewItemMode = function (txn) {
+                txn.isNewItem = true;
+                txn.isUntracked = false;
+                if (!txn.unitOverride) txn.unitOverride = txn.unit || 'pcs';
+                if (!txn.rateOverride) txn.rateOverride = txn.rate || null;
+                $scope.recalculateRunningStocks();
+            };
+
+            $scope.cancelNewItemMode = function (txn) {
+                txn.isNewItem = false;
+                txn.isUntracked = true;
+                $scope.recalculateRunningStocks();
+            };
+
+            $scope.autoFillBill = function (txn, index) {
+                if (!txn.fileObj) return;
+                txn.isExtracting = true;
+
+                readFile(txn.fileObj).then(fileData => {
+                    google.script.run.withSuccessHandler(function (jsonString) {
+                        $timeout(function () {
+                            txn.isExtracting = false;
+                            try {
+                                let extractedData = JSON.parse(jsonString);
+
+                                if (extractedData && extractedData.length > 0) {
+                                    let firstItem = extractedData[0];
+                                    txn.isNewItem = false;
+                                    txn.isUntracked = false;
+                                    txn.searchName = firstItem.itemName;
+                                    txn.quantity = firstItem.quantity ? parseFloat(firstItem.quantity) : null;
+                                    txn.rateOverride = firstItem.rate ? parseFloat(firstItem.rate) : null;
+                                    txn.invoiceNumber = firstItem.invoiceNumber;
+                                    txn.unitOverride = firstItem.unit;
+                                    $scope.onItemSelect(txn);
+                                    $scope.calcTotal(txn);
+
+                                    for (let i = 1; i < extractedData.length; i++) {
+                                        let newItem = extractedData[i];
+
+                                        $scope.addTransactionCard(false);
+                                        let newTxn = $scope.transactions[$scope.activeCardIndex];
+
+                                        newTxn.fileObj = txn.fileObj;
+                                        newTxn.siteName = txn.siteName;
+                                        newTxn.transactionType = txn.transactionType;
+
+                                        newTxn.isNewItem = false;
+                                        newTxn.isUntracked = false;
+                                        newTxn.searchName = newItem.itemName;
+                                        newTxn.quantity = newItem.quantity ? parseFloat(newItem.quantity) : null;
+                                        newTxn.rateOverride = newItem.rate ? parseFloat(newItem.rate) : null;
+                                        newTxn.invoiceNumber = newItem.invoiceNumber;
+                                        newTxn.unitOverride = newItem.unit;
+
+                                        $scope.onItemSelect(newTxn);
+                                        $scope.calcTotal(newTxn);
+                                    }
+                                }
+                            } catch (e) {
+                                alert("Failed to parse bill data: " + e.message);
+                            }
+                        });
+                    }).withFailureHandler(function (err) {
+                        $timeout(function () {
+                            txn.isExtracting = false;
+                            alert("Extraction failed: " + err);
+                        });
+                    }).extractBillDataFromImage(fileData.data, fileData.mime);
+                }).catch(function (err) {
+                    $timeout(function () {
+                        txn.isExtracting = false;
+                        alert("File read error: " + err);
+                    });
+                });
+            };
+
+            $scope.filterItems = function (txn) {
+                txn.availableOptions = txn.category ? ($scope.inventoryData[txn.category] || []) : getAllItems();
+                if (!txn.isNewItem && !txn.isUntracked) {
+                    const stillValid = txn.category
+                        ? ($scope.inventoryData[txn.category] || []).some(o => o.name === txn.name)
+                        : true;
+                    if (!stillValid) {
+                        txn.searchName = '';
+                        txn.name = '';
+                        txn.currentStock = 0;
+                        txn.unit = '';
+                        txn.rate = 0;
+                        txn.imageUrl = '';
+                        txn.imageError = false;
+                    }
+                }
+                if (txn.isNewItem) txn.itemCategory = txn.category || '';
+                $scope.recalculateRunningStocks();
+            };
+
+            $scope.calcTotal = function (txn) {
+                let qty = parseFloat(txn.quantity) || 0;
+                let r = parseFloat((txn.rateOverride !== null && txn.rateOverride !== undefined && txn.rateOverride !== '') ? txn.rateOverride : txn.rate) || 0;
+                txn.totalAmount = parseFloat((qty * r).toFixed(2));
+            };
+
+            $scope.onTotalChange = function (txn) {
+                let qty = parseFloat(txn.quantity) || 0;
+                let total = parseFloat(txn.totalAmount) || 0;
+                if (qty > 0) {
+                    txn.rateOverride = parseFloat((total / qty).toFixed(2));
+                }
+            };
+
+            function readFile(file) {
+                return $q((resolve, reject) => {
+                    if (!file) return resolve(null);
+                    if (fileDataCache.has(file)) return resolve(fileDataCache.get(file));
+                    if (file.size > 5242880) { reject(file.name + " exceeds 5MB limit"); return; }
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        const result = { name: file.name, mime: file.type || 'application/octet-stream', data: e.target.result.split(',')[1] };
+                        fileDataCache.set(file, result);
+                        resolve(result);
+                    };
+                    reader.onerror = () => reject("Failed to read file");
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            $scope.submitAll = function () {
+                $scope.submitAttempted = true;
+                const errors = [];
+                $scope.recalculateRunningStocks();
+
+                $scope.transactions.forEach((txn, i) => {
+                    if (!txn.siteName) errors.push(`Card #${i + 1}: Site name required`);
+                    if (!txn.name) errors.push(`Card #${i + 1}: Item name required`);
+
+                    if (txn.isUntracked && ['In', 'Out', 'Repair'].includes(txn.transactionType)) {
+                        errors.push(`Card #${i + 1}: "${txn.name}" is not in the master list. Please click "+ Create in Master" to register it first, or use a "Direct" transaction.`);
+                    }
+
+                    if (txn.isNewItem) {
+                        if (!txn.category) errors.push(`Card #${i + 1}: Category required for new item "${txn.name}"`);
+                        if (!txn.unitOverride) errors.push(`Card #${i + 1}: Unit required for new item "${txn.name}"`);
+                        if (txn.rateOverride === undefined || txn.rateOverride === null || txn.rateOverride === '' || txn.rateOverride <= 0) {
+                            errors.push(`Card #${i + 1}: Rate must be greater than 0 for new item "${txn.name}"`);
+                        }
+                        if (['Out', 'Repair'].includes(txn.transactionType))
+                            errors.push(`Card #${i + 1}: New items have 0 stock — use "In" or "Direct"`);
+                    } else if (!txn.isUntracked) {
+                        if (!txn.category && !txn.itemCategory && txn.name) {
+                            for (let cat in $scope.inventoryData) {
+                                if ($scope.inventoryData[cat].some(item => item.name === txn.name)) { txn.itemCategory = cat; break; }
+                            }
+                        }
+                        if (['Out', 'Repair'].includes(txn.transactionType) && txn.quantity > txn.currentStock)
+                            errors.push(`Card #${i + 1}: Insufficient stock! Only ${txn.currentStock} available`);
+                    }
+
+                    if (txn.saveToBills && !txn.fileObj) {
+                        errors.push(`Card #${i + 1}: "Save to Bills" option is checked, but no file is uploaded. An invoice image or PDF file is required.`);
+                    }
+
+                    if (!txn.quantity || txn.quantity <= 0) errors.push(`Card #${i + 1}: Valid quantity required`);
+                });
+
+                if (errors.length) { alert("Please fix these issues:\n" + errors.join("\n")); return; }
+
+                $scope.isSubmitting = true;
+                $scope.isLoading = true;
+
+                // Concurrently read both receipt file (footer) and item image file (sidebar) per transaction card
+                const filePromises = $scope.transactions.map(txn => {
+                    return $q.all({
+                        receipt: readFile(txn.fileObj),
+                        newItemImage: readFile(txn.newItemImageFileObj)
+                    });
+                });
+
+                $q.all(filePromises).then(resolvedFiles => {
+                    const batchPayload = $scope.transactions.map((txn, index) => {
+                        const dateObj = (txn.transactionDateTime instanceof Date) ? txn.transactionDateTime : new Date(txn.transactionDateTime);
+                        const resolved = resolvedFiles[index];
+                        return {
+                            transactionDateTime: dateObj.toISOString(),
+                            siteName: txn.siteName,
+                            transactionType: txn.transactionType,
+                            category: txn.itemCategory || txn.category,
+                            name: txn.name,
+                            quantity: txn.quantity,
+                            unitOverride: txn.unitOverride,
+                            rateOverride: txn.rateOverride,
+                            unit: txn.unit,
+                            rate: txn.rate,
+                            invoiceNumber: txn.invoiceNumber,
+                            additionalDescription: txn.additionalDescription,
+                            processedBy: $scope.userEmail,
+                            fileData: resolved.receipt,
+                            isNewItem: txn.isNewItem || false,
+                            itemImageUrl: txn.imageUrl || '',
+                            newItemImageData: resolved.newItemImage || null,
+                            saveToBills: txn.saveToBills || false
+                        };
+                    });
+
+                    google.script.run.withSuccessHandler(res => {
+                        $timeout(() => {
+                            $scope.isResetting = true;
+                            $scope.isSubmitting = false;
+                            $scope.isLoading = false;
+                            $scope.submitAttempted = false;
+                            $scope.transactions = [];
+                            $scope.clearDraft();
+
+                            let message = `✅ Success! Saved ${batchPayload.length} transaction(s) to All_Transactions.`;
+                            if (res.savedBillsCount && res.savedBillsCount > 0) {
+                                message += `\n\n🧾 Notice: ${res.savedBillsCount} of those cards contained bills/invoice numbers and have also been saved separately into the "Bills" sheet!`;
+                            }
+                            alert(message);
+
+                            $scope.addTransactionCard(true);
+
+                            google.script.run.withSuccessHandler(function (data) {
+                                $timeout(function () {
+                                    $scope.sites = data.sites || [];
+                                    $scope.categories = data.categories || [];
+                                    $scope.inventoryData = data.itemsByCategory || {};
+                                    $scope.userEmail = data.userEmail || "";
+                                    $scope.isResetting = false;
+                                });
+                            }).getDropdownData();
+                        });
+                    }).withFailureHandler(err => {
+                        $timeout(() => {
+                            $scope.isSubmitting = false;
+                            $scope.isLoading = false;
+                            alert("Submission failed: " + err);
+                        });
+                    }).submitForm(batchPayload);
+
+                }).catch(err => {
+                    $timeout(() => {
+                        $scope.isSubmitting = false;
+                        $scope.isLoading = false;
+                        alert("File parsing error: " + err);
+                    });
+                });
+            };
+        });
+    </script>
+</body>
+
+</html>
